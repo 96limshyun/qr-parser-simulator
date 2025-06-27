@@ -20,7 +20,7 @@ const App = () => {
   const ActiveComponent = navigationMap[activeTab];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-8 space-y-12">
+    <div className="min-h-screen flex flex-col gap-6 items-center justify-start bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-10 space-y-12">
       <Text
         fontSize="3xl"
         fontWeight="bold"

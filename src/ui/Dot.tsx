@@ -1,4 +1,3 @@
-// src/components/ui/Dot.tsx
 import { cva, type VariantProps } from "class-variance-authority";
 import twc from "tailwind-styled-components";
 

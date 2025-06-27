@@ -10,7 +10,7 @@ interface NavigationProps {
 
 const Navigation = ({ activeTab, setActiveTab }: NavigationProps) => {
   return (
-    <nav className="w-full flex">
+    <nav className="w-full flex mb-0">
       {NAVIGATION.map(({ key, label }, idx) => {
         const isFirst = idx === 0;
         const isLast = idx === NAVIGATION.length - 1;

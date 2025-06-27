@@ -4,7 +4,7 @@ import twc from "tailwind-styled-components";
 
 import type { ReactNode } from "react";
 
-const textVariants = cva("", {
+const textVariants = cva("mb-0", {
   variants: {
     fontSize: {
       "xs": "text-xs",
