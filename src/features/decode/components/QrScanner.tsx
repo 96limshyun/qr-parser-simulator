@@ -1,57 +1,19 @@
-import jsQR from "jsqr";
-import QRCode from "qrcode";
-import { useRef, type ChangeEvent, type Dispatch, type SetStateAction } from "react";
+import { type Dispatch, type SetStateAction } from "react";
+
+import useQrScanner from "../hooks/useQrScanner";
 
 import Button from "@/ui/Button";
 import Card from "@/ui/Card";
 import Input from "@/ui/Input";
 import Text from "@/ui/Text";
-
 interface QrScannerProps {
   setMatrix: Dispatch<SetStateAction<number[][]>>;
 }
+const CONTAINER_ID = "qr-video-box";
 
 const QrScanner = ({ setMatrix }: QrScannerProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.src = reader.result as string;
-
-      img.onload = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-
-        const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-        const result = jsQR(data, width, height);
-
-        if (!result?.data) {
-          alert("QR을 인식하지 못했습니다.");
-          return;
-        }
-
-        const qr = QRCode.create(result.data, { errorCorrectionLevel: "M" });
-        const mod = qr.modules;
-        const matrix = Array.from({ length: mod.size }, (_, row) =>
-          Array.from({ length: mod.size }, (_, col) => (mod.get(col, row) ? 1 : 0)),
-        );
-
-        setMatrix(matrix);
-      };
-    };
-    reader.readAsDataURL(file!);
-  };
+  const { canvasRef, videoBoxRef, isCameraOn, handleFileChange, handleCameraToggle } =
+    useQrScanner(setMatrix);
 
   return (
     <Card className="w-full flex flex-col items-center justify-center gap-2">
@@ -75,10 +37,18 @@ const QrScanner = ({ setMatrix }: QrScannerProps) => {
       />
       <Button
         layout="block"
-        className="flex justify-center"
+        className="flex justify-center transition-colors duration-300 ease-in-out"
+        intent={`${isCameraOn ? "danger" : "primary"}`}
+        onClick={handleCameraToggle}
       >
-        카메라 시작
+        {isCameraOn ? "카메라 중지" : "카메라 시작"}
       </Button>
+      <div
+        id={CONTAINER_ID}
+        ref={videoBoxRef}
+        className={`relative w-full h-full rounded-lg overflow-hidden border
+                  border-gray-600 mt-3 ${isCameraOn ? "" : "hidden"}`}
+      />
       <canvas
         ref={canvasRef}
         className="hidden"

@@ -20,6 +20,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "class-variance-authority": "^0.7.1",
+    "html5-qrcode": "^2.3.8",
     "jsqr": "^1.4.0",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",

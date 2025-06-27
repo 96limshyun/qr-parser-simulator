@@ -28,7 +28,12 @@ const QrMatrixPlayer = ({ matrix }: QrMatrixPlayerProps) => {
             className="bg-gray-900 border border-gray-600 text-white px-2 py-1 rounded text-sm"
           >
             {SPEED_OPTIONS.map(({ value, label }) => (
-              <option value={value}>{label}</option>
+              <option
+                key={label}
+                value={value}
+              >
+                {label}
+              </option>
             ))}
           </select>
         </div>

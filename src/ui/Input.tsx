@@ -27,15 +27,6 @@ const StyledInput = twc.input<VariantStrict>`
     twMerge(primitiveVariants({ tone, size, full, rounded }), className)}
 `;
 
-const StyledLabel = twc.label<VariantStrict>`
-  ${({ tone, size, full, rounded, className }) =>
-    twMerge(
-      primitiveVariants({ tone, size, full, rounded }),
-      "cursor-pointer select-none",
-      className,
-    )}
-`;
-
 const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   const {
     tone,
@@ -56,6 +47,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
 
   const generatedId = useId();
   const id = idProp ?? generatedId;
+  const classes = twMerge(primitiveVariants({ tone, size, full, rounded }), className);
 
   if (htmlType === "file") {
     return (
@@ -71,16 +63,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
           {...rest}
         />
 
-        <StyledLabel
+        <label
           htmlFor={id}
-          tone={tone}
-          size={size}
-          full={full}
-          rounded={rounded}
-          className={className}
+          className={classes}
         >
           {label}
-        </StyledLabel>
+        </label>
       </Fragment>
     );
   }
