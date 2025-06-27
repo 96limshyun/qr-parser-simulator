@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import twc from "tailwind-styled-components";
 
-const dotVariants = cva("rounded-full shrink-0", {
+const dotVariants = cva("rounded-full shrink-0 self-center ", {
   variants: {
     color: {
       gray: "bg-gray-400",
@@ -11,6 +11,8 @@ const dotVariants = cva("rounded-full shrink-0", {
       yellow: "bg-yellow-500",
       orange: "bg-orange-500",
       cyan: "bg-cyan-500",
+      purple: "bg-purple-500",
+      emerald: "bg-emerald-500",
     },
     size: {
       sm: "w-2 h-2",

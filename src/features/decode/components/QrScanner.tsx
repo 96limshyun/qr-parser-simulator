@@ -1,7 +1,6 @@
 import { type Dispatch, type SetStateAction } from "react";
 
-import useQrScanner from "../hooks/useQrScanner";
-
+import useQrScanner from "@/features/decode/hooks/useQrScanner";
 import Button from "@/ui/Button";
 import Card from "@/ui/Card";
 import Input from "@/ui/Input";

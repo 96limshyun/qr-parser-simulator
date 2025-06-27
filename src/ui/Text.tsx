@@ -24,6 +24,7 @@ const textVariants = cva("mb-0", {
       extraBold: "font-extrabold",
     },
     color: {
+      gray: "text-gray-400",
       gray400: "text-gray-400",
       gray300: "text-gray-300",
       red: "text-red-500",

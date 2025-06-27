@@ -7,6 +7,7 @@ import type { HTMLAttributes } from "react";
 const cardVariants = cva("rounded-xl shadow-2xl border inline-block", {
   variants: {
     tone: {
+      pick: "bg-gray-700 border-gray-600",
       default: "bg-gray-800 border-gray-700",
       subtle: "bg-gray-900/60 border-gray-700",
       primary: "bg-blue-900/40 border-blue-700",
