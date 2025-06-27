@@ -1,7 +1,7 @@
 {
   "arrowParens": "always",
   "bracketSameLine": false,
-  "objectWrap": "collapse",
+  "objectWrap": "preserve",
   "bracketSpacing": true,
   "semi": true,
   "experimentalOperatorPosition": "start",
