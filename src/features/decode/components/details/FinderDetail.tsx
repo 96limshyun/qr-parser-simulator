@@ -1,11 +1,12 @@
+import { LiaEyeSolid } from "react-icons/lia";
+
 import { detectFinderPositions } from "@/features/decode/utils/createFinderMask";
 import Text from "@/ui/Text";
-
 export interface StepDetailProps {
   matrix: number[][];
 }
 
-export const FinderDetail = ({ matrix }: StepDetailProps) => {
+const FinderDetail = ({ matrix }: StepDetailProps) => {
   const pos = detectFinderPositions(matrix);
 
   const label = (i: number) => ["좌측 상단", "우측 상단", "좌측 하단"][i] ?? `패턴 ${i + 1}`;
@@ -27,17 +28,23 @@ export const FinderDetail = ({ matrix }: StepDetailProps) => {
       >
         검출된 위치 패턴:
       </Text>
-      <ul className="list-disc ml-5">
+      <div>
         {pos.map(({ rowStart, colStart }, i) => (
-          <li key={i}>
+          <div
+            key={i}
+            className="flex items-center gap-2"
+          >
+            <LiaEyeSolid />
             {label(i)} (
             <span className="font-mono">
               {rowStart}, {colStart}
             </span>
             )
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
+
+export default FinderDetail;

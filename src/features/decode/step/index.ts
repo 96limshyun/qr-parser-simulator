@@ -1,5 +1,7 @@
-import { FinderDetail } from "@/features/decode/components/details/FinderDetail";
+import FinderDetail from "@/features/decode/components/details/FinderDetail";
+import TimingDetail from "@/features/decode/components/details/TimingDetail";
 import { createFinderMask } from "@/features/decode/utils/createFinderMask";
+import { createTimingMask } from "@/features/decode/utils/createTimingMask";
 
 export const DECODE_STEPS = [
   {
@@ -23,8 +25,8 @@ export const DECODE_STEPS = [
     title: "타이밍 패턴",
     description: "행·열 타이밍 패턴을 검출합니다.",
     color: "blue",
-    maskFn: undefined,
-    stepDetailComponent: undefined,
+    maskFn: createTimingMask,
+    stepDetailComponent: TimingDetail,
   },
   {
     step: "Format",
