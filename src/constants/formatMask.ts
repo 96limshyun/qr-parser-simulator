@@ -1,0 +1,1 @@
+export const FORMAT_MASK = 0b101010000010010;

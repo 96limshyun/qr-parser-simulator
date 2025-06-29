@@ -1,3 +1,6 @@
+import FormatDetail from "../components/details/FormatDetail";
+import { createFormatMask } from "../utils/createFormatMask";
+
 import FinderDetail from "@/features/decode/components/details/FinderDetail";
 import TimingDetail from "@/features/decode/components/details/TimingDetail";
 import { createFinderMask } from "@/features/decode/utils/createFinderMask";
@@ -33,8 +36,8 @@ export const DECODE_STEPS = [
     title: "포맷 정보",
     description: "에러 정정 레벨 및 마스크 패턴을 해석합니다.",
     color: "green",
-    maskFn: undefined,
-    stepDetailComponent: undefined,
+    maskFn: createFormatMask,
+    stepDetailComponent: FormatDetail,
   },
   {
     step: "Data",
