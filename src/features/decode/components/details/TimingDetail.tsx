@@ -1,15 +1,14 @@
 import { LiaRulerHorizontalSolid, LiaRulerVerticalSolid } from "react-icons/lia";
 
+import type { DetailProps } from "@/features/decode/types/detailProps";
+
 import { detectTimingPositions } from "@/features/decode/utils/createTimingMask";
 import Text from "@/ui/Text";
 
-interface TimingDetailProps {
-  matrix: number[][];
-}
-
-const TimingDetail = ({ matrix }: TimingDetailProps) => {
+const TimingDetail = ({ matrix, formatInfo }: DetailProps) => {
   const positions = detectTimingPositions(matrix);
-
+  formatInfo.size = matrix.length;
+  console.log(formatInfo);
   return (
     <div className="space-y-1 text-sm leading-6">
       <Text

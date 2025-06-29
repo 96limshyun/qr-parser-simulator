@@ -2,13 +2,13 @@ import { LiaKeySolid } from "react-icons/lia";
 
 import { detectFormatPositions } from "../../utils/createFormatMask";
 
-import type { StepDetailProps } from "@/features/decode/components/details/FinderDetail";
+import type { DetailProps } from "@/features/decode/types/detailProps";
 
 import { ECC_MAP } from "@/constants/eccMap";
 import { FORMAT_MASK } from "@/constants/formatMask";
 import Text from "@/ui/Text";
 
-const FormatDetail = ({ matrix }: StepDetailProps) => {
+const FormatDetail = ({ matrix, color, formatInfo }: DetailProps) => {
   const positions = detectFormatPositions(matrix);
 
   const formatBits = positions.map((p) => p.value);
@@ -18,13 +18,18 @@ const FormatDetail = ({ matrix }: StepDetailProps) => {
   const unmaskedBitsNumber = rawBitsNumber ^ FORMAT_MASK;
   const unmaskedBitsStr = unmaskedBitsNumber.toString(2).padStart(15, "0");
 
-  const formatInfo = unmaskedBitsNumber >> 10;
+  const Info = unmaskedBitsNumber >> 10;
 
-  const eccBits = (formatInfo >> 3) & 0b11;
-  const maskPattern = formatInfo & 0b111;
+  const eccBits = (Info >> 3) & 0b11;
+  const maskPattern = Info & 0b111;
 
   const eccLevel = ECC_MAP[eccBits] ?? "알 수 없음";
 
+  formatInfo.rawBits = rawBitsStr;
+  formatInfo.unmaskedBits = unmaskedBitsStr;
+  formatInfo.eccLevel = eccLevel;
+  formatInfo.maskPattern = maskPattern;
+  console.log(formatInfo);
   return (
     <div className="space-y-2 text-sm leading-6">
       <Text
@@ -61,10 +66,30 @@ const FormatDetail = ({ matrix }: StepDetailProps) => {
         디코딩된 Format 정보:
       </Text>
       <div className="space-y-1 font-mono">
-        <div>Raw Format Bits: {rawBitsStr}</div>
-        <div>Unmasked Bits: {unmaskedBitsStr}</div>
-        <div>Error Correction Level: {eccLevel}</div>
-        <div>Mask Pattern: {maskPattern}번</div>
+        <Text
+          fontSize="sm"
+          color={color}
+        >
+          포맷 원본 비트: {rawBitsStr}
+        </Text>
+        <Text
+          fontSize="sm"
+          color={color}
+        >
+          마스크 해제 후 비트: {unmaskedBitsStr}
+        </Text>
+        <Text
+          fontSize="sm"
+          color={color}
+        >
+          오류 정정 수준: {eccLevel}
+        </Text>
+        <Text
+          fontSize="sm"
+          color={color}
+        >
+          마스크 패턴 번호: {maskPattern}번
+        </Text>
       </div>
     </div>
   );

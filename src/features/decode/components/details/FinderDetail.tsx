@@ -1,12 +1,11 @@
 import { LiaEyeSolid } from "react-icons/lia";
 
+import type { DetailProps } from "@/features/decode/types/detailProps";
+
 import { detectFinderPositions } from "@/features/decode/utils/createFinderMask";
 import Text from "@/ui/Text";
-export interface StepDetailProps {
-  matrix: number[][];
-}
 
-const FinderDetail = ({ matrix }: StepDetailProps) => {
+const FinderDetail = ({ matrix }: DetailProps) => {
   const pos = detectFinderPositions(matrix);
 
   const label = (i: number) => ["좌측 상단", "우측 상단", "좌측 하단"][i] ?? `패턴 ${i + 1}`;
