@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import type { FormatInfo } from "../types/formatInfo";
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
 
 import { COLOR_MAP } from "@/constants/colorMap";
@@ -11,20 +12,20 @@ import Text from "@/ui/Text";
 interface QrMatrixPlayerProps {
   matrix: number[][];
   currentStep: DecodeStep;
+  formatInfo: FormatInfo;
 }
 
-const QrMatrixPlayer = ({ matrix, currentStep }: QrMatrixPlayerProps) => {
+const QrMatrixPlayer = ({ matrix, currentStep, formatInfo }: QrMatrixPlayerProps) => {
   const [animationSpeed, setAnimationSpeed] = useState(1000);
   const [isShowBorder, setIsShowBorder] = useState(false);
 
   const handleToggleBorder = () => setIsShowBorder((prev) => !prev);
-
   const { maskFn, color } = DECODE_STEPS.find((s) => s.step === currentStep) ?? {};
   const highlightColor = COLOR_MAP[color!];
 
   const isCellHighlighted = useMemo(() => {
-    return maskFn ? maskFn(matrix) : () => false;
-  }, [maskFn, matrix]);
+    return maskFn ? maskFn(matrix, formatInfo) : () => false;
+  }, [maskFn, matrix, formatInfo]);
 
   return (
     <Card>

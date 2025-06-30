@@ -1,3 +1,5 @@
+import ECCDetail from "../components/details/ECCDetail";
+
 import DataDetail from "@/features/decode/components/details/dataDetail";
 import FinderDetail from "@/features/decode/components/details/FinderDetail";
 import FormatDetail from "@/features/decode/components/details/FormatDetail";
@@ -5,6 +7,7 @@ import TimingDetail from "@/features/decode/components/details/TimingDetail";
 import { createDataMask } from "@/features/decode/utils/createDataMask";
 import { createFinderMask } from "@/features/decode/utils/createFinderMask";
 import { createFormatMask } from "@/features/decode/utils/createFormatMask";
+import { createReadSolomonMask } from "@/features/decode/utils/createReadSolomonMask";
 import { createTimingMask } from "@/features/decode/utils/createTimingMask";
 
 export const DECODE_STEPS = [
@@ -15,6 +18,7 @@ export const DECODE_STEPS = [
     color: "gray",
     maskFn: undefined,
     stepDetailComponent: undefined,
+    maskFnArgs: [],
   },
   {
     step: "Finder",
@@ -23,6 +27,7 @@ export const DECODE_STEPS = [
     color: "red",
     maskFn: createFinderMask,
     stepDetailComponent: FinderDetail,
+    maskFnArgs: ["matrix"],
   },
   {
     step: "Timing",
@@ -31,6 +36,7 @@ export const DECODE_STEPS = [
     color: "blue",
     maskFn: createTimingMask,
     stepDetailComponent: TimingDetail,
+    maskFnArgs: ["matrix"],
   },
   {
     step: "Format",
@@ -39,6 +45,7 @@ export const DECODE_STEPS = [
     color: "green",
     maskFn: createFormatMask,
     stepDetailComponent: FormatDetail,
+    maskFnArgs: ["matrix"],
   },
   {
     step: "Data",
@@ -47,14 +54,16 @@ export const DECODE_STEPS = [
     color: "purple",
     maskFn: createDataMask,
     stepDetailComponent: DataDetail,
+    maskFnArgs: ["matrix"],
   },
   {
     step: "ECC",
     title: "오류 정정 코드",
     description: "리드‑솔로몬 오류 정정을 수행합니다.",
     color: "orange",
-    maskFn: undefined,
-    stepDetailComponent: undefined,
+    maskFn: createReadSolomonMask,
+    stepDetailComponent: ECCDetail,
+    maskFnArgs: ["matrix", "formatInfo"],
   },
   {
     step: "Decode",

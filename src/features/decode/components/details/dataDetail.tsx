@@ -1,10 +1,18 @@
+import { useEffect } from "react";
+
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
 import { parseDataBits } from "@/features/decode/utils/createDataMask";
 import Text from "@/ui/Text";
 
-const DataDetail = ({ matrix, formatInfo }: DetailProps) => {
+const DataDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
   const bitsStr = parseDataBits(matrix, formatInfo.maskPattern);
+  useEffect(() => {
+    setFormatInfo((prev) => ({
+      ...prev,
+      dataBits: bitsStr,
+    }));
+  }, [bitsStr, setFormatInfo]);
 
   return (
     <div className="space-y-1 text-sm leading-6">

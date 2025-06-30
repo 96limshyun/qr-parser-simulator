@@ -8,12 +8,14 @@ import Text from "@/ui/Text";
 
 const TimingDetail = ({ matrix, setFormatInfo }: DetailProps) => {
   const positions = detectTimingPositions(matrix);
+
   useEffect(() => {
     setFormatInfo((prev) => ({
       ...prev,
       size: matrix.length,
     }));
   }, [matrix.length, setFormatInfo]);
+
   return (
     <div className="space-y-1 text-sm leading-6">
       <Text
