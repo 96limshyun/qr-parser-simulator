@@ -33,6 +33,7 @@ const textVariants = cva("mb-0", {
       yellow: "text-yellow-500",
       orange: "text-orange-500",
       cyan: "text-cyan-500",
+      purple: "bg-purple-500",
     },
   },
   defaultVariants: {

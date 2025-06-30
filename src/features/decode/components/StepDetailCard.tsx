@@ -1,5 +1,6 @@
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
 import type { FormatInfo } from "@/features/decode/types/formatInfo";
+import type { Dispatch, SetStateAction } from "react";
 
 import { DECODE_STEPS } from "@/features/decode/step";
 import Card from "@/ui/Card";
@@ -10,9 +11,15 @@ interface StepDetailCardProps {
   matrix: number[][];
   currentStep: DecodeStep;
   formatInfo: FormatInfo;
+  setFormatInfo: Dispatch<SetStateAction<FormatInfo>>;
 }
 
-const StepDetailCard = ({ matrix, currentStep, formatInfo }: StepDetailCardProps) => {
+const StepDetailCard = ({
+  matrix,
+  currentStep,
+  formatInfo,
+  setFormatInfo,
+}: StepDetailCardProps) => {
   const stepConfig = DECODE_STEPS.find((s) => s.step === currentStep);
 
   if (!stepConfig) return null;
@@ -40,6 +47,7 @@ const StepDetailCard = ({ matrix, currentStep, formatInfo }: StepDetailCardProps
           matrix={matrix}
           color={color}
           formatInfo={formatInfo}
+          setFormatInfo={setFormatInfo}
         />
       : <Text color="gray">{description}</Text>}
     </Card>

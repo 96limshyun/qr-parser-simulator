@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { LiaKeySolid } from "react-icons/lia";
 
 import { detectFormatPositions } from "../../utils/createFormatMask";
@@ -8,10 +9,10 @@ import { ECC_MAP } from "@/constants/eccMap";
 import { FORMAT_MASK } from "@/constants/formatMask";
 import Text from "@/ui/Text";
 
-const FormatDetail = ({ matrix, color, formatInfo }: DetailProps) => {
+const FormatDetail = ({ matrix, color, setFormatInfo }: DetailProps) => {
   const positions = detectFormatPositions(matrix);
 
-  const formatBits = positions.map((p) => p.value);
+  const formatBits = positions.slice(0, 15).map((p) => p.value);
   const rawBitsNumber = formatBits.reduce((acc, bit) => (acc << 1) | bit, 0);
   const rawBitsStr = rawBitsNumber.toString(2).padStart(15, "0");
 
@@ -24,12 +25,16 @@ const FormatDetail = ({ matrix, color, formatInfo }: DetailProps) => {
   const maskPattern = Info & 0b111;
 
   const eccLevel = ECC_MAP[eccBits] ?? "알 수 없음";
+  useEffect(() => {
+    setFormatInfo((prev) => ({
+      ...prev,
+      rawBits: rawBitsStr,
+      unmaskedBits: unmaskedBitsStr,
+      eccLevel,
+      maskPattern,
+    }));
+  }, [matrix.length, setFormatInfo, rawBitsStr, unmaskedBitsStr, eccLevel, maskPattern]);
 
-  formatInfo.rawBits = rawBitsStr;
-  formatInfo.unmaskedBits = unmaskedBitsStr;
-  formatInfo.eccLevel = eccLevel;
-  formatInfo.maskPattern = maskPattern;
-  console.log(formatInfo);
   return (
     <div className="space-y-2 text-sm leading-6">
       <Text

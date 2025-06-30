@@ -1,9 +1,10 @@
-import FormatDetail from "../components/details/FormatDetail";
-import { createFormatMask } from "../utils/createFormatMask";
-
+import DataDetail from "@/features/decode/components/details/dataDetail";
 import FinderDetail from "@/features/decode/components/details/FinderDetail";
+import FormatDetail from "@/features/decode/components/details/FormatDetail";
 import TimingDetail from "@/features/decode/components/details/TimingDetail";
+import { createDataMask } from "@/features/decode/utils/createDataMask";
 import { createFinderMask } from "@/features/decode/utils/createFinderMask";
+import { createFormatMask } from "@/features/decode/utils/createFormatMask";
 import { createTimingMask } from "@/features/decode/utils/createTimingMask";
 
 export const DECODE_STEPS = [
@@ -44,8 +45,8 @@ export const DECODE_STEPS = [
     title: "데이터 모듈",
     description: "데이터 영역 비트를 추출합니다.",
     color: "purple",
-    maskFn: undefined,
-    stepDetailComponent: undefined,
+    maskFn: createDataMask,
+    stepDetailComponent: DataDetail,
   },
   {
     step: "ECC",
