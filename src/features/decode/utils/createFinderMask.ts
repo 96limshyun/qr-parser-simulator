@@ -1,4 +1,30 @@
+import { getVersionByMatrixSize } from "./getVersionByMatrixSize";
+
+import { ALIGNMENT_PATTERN_LOCATIONS } from "@/constants/alignmentPattern";
 import { FINDER_PATTERN } from "@/constants/finderPattern";
+
+export function detectAlignmentPositions(
+  version: number,
+  matrixSize: number,
+): Array<{ row: number; col: number }> {
+  const centers = ALIGNMENT_PATTERN_LOCATIONS[version] || [];
+  const positions: Array<{ row: number; col: number }> = [];
+
+  for (const row of centers) {
+    for (const col of centers) {
+      if (
+        (row <= 8 && col <= 8)
+        || (row <= 8 && col >= matrixSize - 8)
+        || (row >= matrixSize - 8 && col <= 8)
+      ) {
+        continue;
+      }
+      positions.push({ row, col });
+    }
+  }
+
+  return positions;
+}
 
 export function detectFinderPositions(
   qrMatrix: number[][],
@@ -24,13 +50,29 @@ export function detectFinderPositions(
 }
 
 export function createFinderMask(qrMatrix: number[][]) {
+  const version = getVersionByMatrixSize(qrMatrix.length);
   const finderPositions = detectFinderPositions(qrMatrix);
+  const alignmentPositions = detectAlignmentPositions(version!, qrMatrix.length);
 
   return (rowIndex: number, columnIndex: number) => {
-    return finderPositions.some(({ rowStart, colStart }) => {
-      const insideRow = rowIndex >= rowStart && rowIndex < rowStart + 7;
-      const insideCol = columnIndex >= colStart && columnIndex < colStart + 7;
-      return insideRow && insideCol;
+    const inFinder = finderPositions.some(({ rowStart, colStart }) => {
+      return (
+        rowIndex >= rowStart
+        && rowIndex < rowStart + 7
+        && columnIndex >= colStart
+        && columnIndex < colStart + 7
+      );
     });
+    if (inFinder) return true;
+
+    const inAlignment = alignmentPositions.some(({ row, col }) => {
+      return (
+        rowIndex >= row - 2
+        && rowIndex <= row + 2
+        && columnIndex >= col - 2
+        && columnIndex <= col + 2
+      );
+    });
+    return inAlignment;
   };
 }
