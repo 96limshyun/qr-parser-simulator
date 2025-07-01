@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { FormatInfo } from "../types/formatInfo";
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
@@ -15,17 +15,35 @@ interface QrMatrixPlayerProps {
   formatInfo: FormatInfo;
 }
 
-const QrMatrixPlayer = ({ matrix, currentStep, formatInfo }: QrMatrixPlayerProps) => {
-  const [animationSpeed, setAnimationSpeed] = useState(1000);
+const QrMatrixPlayer = ({ matrix, currentStep }: QrMatrixPlayerProps) => {
+  const [animationSpeed, setAnimationSpeed] = useState(10);
   const [isShowBorder, setIsShowBorder] = useState(false);
+  const [filledCells, setFilledCells] = useState(new Set<string>());
 
   const handleToggleBorder = () => setIsShowBorder((prev) => !prev);
+
   const { maskFn, color } = DECODE_STEPS.find((s) => s.step === currentStep) ?? {};
   const highlightColor = COLOR_MAP[color!];
 
-  const isCellHighlighted = useMemo(() => {
-    return maskFn ? maskFn(matrix, formatInfo) : () => false;
-  }, [maskFn, matrix, formatInfo]);
+  const position = useMemo(() => {
+    return maskFn ? maskFn(matrix) : [];
+  }, [maskFn, matrix]);
+
+  useEffect(() => {
+    setFilledCells(new Set<string>());
+    if (!maskFn) return;
+    let currentIndex = 0;
+
+    const interval = setInterval(() => {
+      if (currentIndex >= position.length) {
+        clearInterval(interval);
+        return;
+      }
+      const { row, col } = position[currentIndex];
+      setFilledCells((prev) => new Set(prev).add(`${row},${col}`));
+      currentIndex++;
+    }, animationSpeed);
+  }, [animationSpeed, maskFn, matrix, position]);
 
   return (
     <Card>
@@ -75,12 +93,13 @@ const QrMatrixPlayer = ({ matrix, currentStep, formatInfo }: QrMatrixPlayerProps
             >
               {row.map((bit, colIndex) => {
                 const base = bit ? "bg-black" : "bg-white";
-                const color = isCellHighlighted(rowIndex, colIndex) ? highlightColor : base;
+                const hasPosition = filledCells.has(`${rowIndex},${colIndex}`);
+                const isCellHighlighted = hasPosition ? highlightColor : base;
 
                 return (
                   <div
                     key={colIndex}
-                    className={`${color} w-3 h-3 ${isShowBorder ? "" : "border border-gray-700"} transition-colors duration-150`}
+                    className={`${isCellHighlighted} w-3 h-3 ${isShowBorder ? "" : "border border-gray-700"} transition-colors duration-150`}
                   ></div>
                 );
               })}
