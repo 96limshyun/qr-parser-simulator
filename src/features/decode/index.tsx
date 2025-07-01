@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
 import type { FormatInfo } from "@/features/decode/types/formatInfo";
 
+import { DEFAULT_DECODE_INFO } from "@/constants/defaultDecodeInfo";
 import { DEFAULT_MATRIX } from "@/constants/defaultMatrix";
 import ProcessStepper from "@/features/decode/components/ProcessStepper";
 import QrMatrixPlayer from "@/features/decode/components/QrMatrixPlayer";
@@ -13,30 +14,14 @@ import { getVersionByMatrixSize } from "@/features/decode/utils/getVersionByMatr
 const Decode = () => {
   const [matrix, setMatrix] = useState<number[][]>(DEFAULT_MATRIX);
   const [currentStep, setCurrentStep] = useState<DecodeStep>("Init");
-  const [formatInfo, setFormatInfo] = useState<FormatInfo>({
-    rawBits: "",
-    unmaskedBits: "",
-    eccLevel: "",
-    maskPattern: 0,
-    version: 0,
-    size: 0,
-    mode: "",
-    modeBits: "",
-    characterCount: 0,
-    dataBits: "",
-    decodedText: "",
-    decodedBytes: [],
-    errorCorrection: {
-      totalCodewords: 0,
-      ecCodewordsPerBlock: 0,
-      numBlocks: 0,
-    },
-  });
-
-  formatInfo.version = getVersionByMatrixSize(matrix.length) ?? 0;
-  formatInfo.size = matrix.length;
+  const [formatInfo, setFormatInfo] = useState<FormatInfo>(DEFAULT_DECODE_INFO);
 
   useEffect(() => {
+    setFormatInfo((prev) => ({
+      ...prev,
+      version: getVersionByMatrixSize(matrix.length) ?? 0,
+      size: matrix.length,
+    }));
     setCurrentStep("Init");
   }, [matrix]);
 
