@@ -5,26 +5,16 @@ import type { FormatInfo } from "../types/formatInfo";
 import { createReservedMap } from "@/features/decode/utils/createDataMask";
 import { getDataModuleCoordinates } from "@/features/decode/utils/createDataMask";
 
-export const bitsToBytes = (bitsStr: string): number[] => {
-  const bytes: number[] = [];
-  for (let i = 0; i < bitsStr.length; i += 8) {
-    const byteStr = bitsStr.slice(i, i + 8);
-    if (byteStr.length < 8) break;
-    bytes.push(parseInt(byteStr, 2));
-  }
-  return bytes;
-};
-
 export function parseECCBits(matrix: number[][], formatInfo: FormatInfo): string {
-  const eccMaskFn = createReadSolomonMask(matrix, formatInfo);
-  let bits = "";
+  const eccCoords = createReadSolomonMask(matrix, formatInfo);
 
-  for (let row = 0; row < matrix.length; row++) {
-    for (let col = 0; col < matrix.length; col++) {
-      if (eccMaskFn(row, col)) {
-        bits += matrix[row][col];
-      }
-    }
+  if (!Array.isArray(eccCoords) || eccCoords.length === 0) {
+    return "";
+  }
+
+  let bits = "";
+  for (const { row, col } of eccCoords) {
+    bits += matrix[row][col];
   }
   return bits;
 }
@@ -44,5 +34,6 @@ export const createReadSolomonMask = (matrix: number[][], formatInfo: FormatInfo
 
   const eccStartBit = eccInfo.totalDataCodewords * 8;
   const eccCoords = dataCoords.slice(eccStartBit);
-  return (row: number, col: number) => eccCoords.some((p) => p.row === row && p.col === col);
+
+  return eccCoords;
 };

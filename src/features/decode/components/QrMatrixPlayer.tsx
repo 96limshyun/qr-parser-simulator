@@ -15,7 +15,7 @@ interface QrMatrixPlayerProps {
   formatInfo: FormatInfo;
 }
 
-const QrMatrixPlayer = ({ matrix, currentStep }: QrMatrixPlayerProps) => {
+const QrMatrixPlayer = ({ matrix, currentStep, formatInfo }: QrMatrixPlayerProps) => {
   const [animationSpeed, setAnimationSpeed] = useState(10);
   const [isShowBorder, setIsShowBorder] = useState(false);
   const [filledCells, setFilledCells] = useState(new Set<string>());
@@ -26,8 +26,8 @@ const QrMatrixPlayer = ({ matrix, currentStep }: QrMatrixPlayerProps) => {
   const highlightColor = COLOR_MAP[color!];
 
   const position = useMemo(() => {
-    return maskFn ? maskFn(matrix) : [];
-  }, [maskFn, matrix]);
+    return maskFn ? maskFn(matrix, formatInfo) : [];
+  }, [maskFn, matrix, formatInfo]);
 
   useEffect(() => {
     setFilledCells(new Set<string>());
@@ -35,13 +35,15 @@ const QrMatrixPlayer = ({ matrix, currentStep }: QrMatrixPlayerProps) => {
     let currentIndex = 0;
 
     const interval = setInterval(() => {
-      if (currentIndex >= position.length) {
+      if (Array.isArray(position) && currentIndex >= position.length) {
         clearInterval(interval);
         return;
       }
-      const { row, col } = position[currentIndex];
-      setFilledCells((prev) => new Set(prev).add(`${row},${col}`));
-      currentIndex++;
+      if (Array.isArray(position)) {
+        const { row, col } = position[currentIndex];
+        setFilledCells((prev) => new Set(prev).add(`${row},${col}`));
+        currentIndex++;
+      }
     }, animationSpeed);
     return () => {
       clearInterval(interval);
