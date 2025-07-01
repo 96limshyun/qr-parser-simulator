@@ -21,8 +21,8 @@ export function detectTimingPositions(matrix: number[][]) {
   return positions;
 }
 
-export const createTimingMask = (matrix: number[][]) => {
-  const size = matrix.length;
+export const createTimingMask = (qrMatrix: number[][]) => {
+  const size = qrMatrix.length;
   const maskPositions: Array<{ row: number; col: number }> = [];
 
   for (let col = 8; col <= size - 9; col++) {

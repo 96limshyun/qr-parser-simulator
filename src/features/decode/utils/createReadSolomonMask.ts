@@ -19,9 +19,9 @@ export function parseECCBits(matrix: number[][], formatInfo: FormatInfo): string
   return bits;
 }
 
-export const createReadSolomonMask = (matrix: number[][], formatInfo: FormatInfo) => {
-  const reservedMap = createReservedMap(matrix);
-  const dataCoords = getDataModuleCoordinates(matrix, reservedMap);
+export const createReadSolomonMask = (qrMatrix: number[][], formatInfo: FormatInfo) => {
+  const reservedMap = createReservedMap(qrMatrix);
+  const dataCoords = getDataModuleCoordinates(qrMatrix, reservedMap);
   const eccLevel = formatInfo.eccLevel.split(" ")[0];
   const eccInfo = getECCInfo(formatInfo.version, eccLevel as "L" | "M" | "Q" | "H");
 

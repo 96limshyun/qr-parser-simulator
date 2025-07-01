@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { CiPause1 } from "react-icons/ci";
+import { FiPlay } from "react-icons/fi";
+import { RiResetLeftFill } from "react-icons/ri";
 
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
 import type { FormatInfo } from "@/features/decode/types/formatInfo";
 
 import { COLOR_MAP } from "@/constants/colorMap";
 import { SPEED_OPTIONS } from "@/constants/simulationSpeed";
+import useCellAnimation from "@/features/decode/hooks/useCellAnimation";
 import { DECODE_STEPS } from "@/features/decode/step";
+import Button from "@/ui/Button";
 import Card from "@/ui/Card";
 import Text from "@/ui/Text";
 
@@ -13,12 +18,21 @@ interface QrMatrixPlayerProps {
   matrix: number[][];
   currentStep: DecodeStep;
   formatInfo: FormatInfo;
+  setCurrentStep: Dispatch<SetStateAction<DecodeStep>>;
+  isPlaying: boolean;
+  setIsPlaying: Dispatch<SetStateAction<boolean>>;
 }
 
-const QrMatrixPlayer = ({ matrix, currentStep, formatInfo }: QrMatrixPlayerProps) => {
-  const [animationSpeed, setAnimationSpeed] = useState(10);
+const QrMatrixPlayer = ({
+  matrix,
+  currentStep,
+  formatInfo,
+  setCurrentStep,
+  isPlaying,
+  setIsPlaying,
+}: QrMatrixPlayerProps) => {
+  const [animationSpeed, setAnimationSpeed] = useState(2000);
   const [isShowBorder, setIsShowBorder] = useState(false);
-  const [filledCells, setFilledCells] = useState(new Set<string>());
 
   const handleToggleBorder = () => setIsShowBorder((prev) => !prev);
 
@@ -29,26 +43,36 @@ const QrMatrixPlayer = ({ matrix, currentStep, formatInfo }: QrMatrixPlayerProps
     return maskFn ? maskFn(matrix, formatInfo) : [];
   }, [maskFn, matrix, formatInfo]);
 
+  const { filledCells, setFilledCells } = useCellAnimation({ animationSpeed, position, matrix });
+
   useEffect(() => {
-    setFilledCells(new Set<string>());
-    if (!maskFn) return;
-    let currentIndex = 0;
+    if (!isPlaying) {
+      setFilledCells(new Set<string>());
+      return;
+    }
+
+    let currentIndex = DECODE_STEPS.findIndex((s) => s.step === currentStep);
 
     const interval = setInterval(() => {
-      if (Array.isArray(position) && currentIndex >= position.length) {
+      currentIndex += 1;
+
+      if (currentIndex >= DECODE_STEPS.length) {
         clearInterval(interval);
+        setIsPlaying(false);
         return;
       }
-      if (Array.isArray(position)) {
-        const { row, col } = position[currentIndex];
-        setFilledCells((prev) => new Set(prev).add(`${row},${col}`));
-        currentIndex++;
-      }
+
+      setCurrentStep(DECODE_STEPS[currentIndex].step);
     }, animationSpeed);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [animationSpeed, maskFn, matrix, position]);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, currentStep, setCurrentStep, setIsPlaying, animationSpeed, setFilledCells]);
+
+  const handleResetClick = () => {
+    setFilledCells(new Set<string>());
+    setCurrentStep("Init");
+    setIsPlaying(false);
+  };
 
   return (
     <Card>
@@ -112,6 +136,32 @@ const QrMatrixPlayer = ({ matrix, currentStep, formatInfo }: QrMatrixPlayerProps
           ))}
         </div>
       </section>
+      <div className="w-full flex justify-center mt-4 gap-4">
+        {isPlaying ?
+          <Button
+            intent="secondary"
+            className="w-25 flex items-center justify-center"
+            onClick={() => setIsPlaying(false)}
+          >
+            <CiPause1 />
+            정지
+          </Button>
+        : <Button
+            intent="secondary"
+            className="w-25 flex items-center justify-center px-4"
+            onClick={() => setIsPlaying(true)}
+          >
+            <FiPlay />
+            시작
+          </Button>
+        }
+        <Button
+          className="w-25 flex items-center justify-center"
+          onClick={handleResetClick}
+        >
+          <RiResetLeftFill /> 초기화
+        </Button>
+      </div>
     </Card>
   );
 };

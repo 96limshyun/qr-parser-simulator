@@ -15,6 +15,7 @@ const Decode = () => {
   const [matrix, setMatrix] = useState<number[][]>(DEFAULT_MATRIX);
   const [currentStep, setCurrentStep] = useState<DecodeStep>("Init");
   const [formatInfo, setFormatInfo] = useState<FormatInfo>(DEFAULT_DECODE_INFO);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     setFormatInfo((prev) => ({
@@ -23,6 +24,7 @@ const Decode = () => {
       size: matrix.length,
     }));
     setCurrentStep("Init");
+    setIsPlaying(false);
   }, [matrix]);
 
   return (
@@ -32,6 +34,9 @@ const Decode = () => {
           matrix={matrix}
           currentStep={currentStep}
           formatInfo={formatInfo}
+          setCurrentStep={setCurrentStep}
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
         />
         <StepDetailCard
           matrix={matrix}

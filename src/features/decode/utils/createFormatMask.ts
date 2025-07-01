@@ -13,8 +13,8 @@ export const detectFormatPositionsTopLeft = (matrix: number[][]) => {
   }));
 };
 
-export const createFormatMask = (matrix: number[][]) => {
-  const size = matrix.length;
+export const createFormatMask = (qrMatrix: number[][]) => {
+  const size = qrMatrix.length;
   const maskPositions: Array<{ row: number; col: number }> = [];
 
   for (let col = 0; col <= 5; col++) maskPositions.push({ row: 8, col });
