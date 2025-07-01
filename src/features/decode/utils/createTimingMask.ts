@@ -23,17 +23,15 @@ export function detectTimingPositions(matrix: number[][]) {
 
 export const createTimingMask = (matrix: number[][]) => {
   const size = matrix.length;
-  const timingCoords = new Set<string>();
+  const maskPositions: Array<{ row: number; col: number }> = [];
 
   for (let col = 8; col <= size - 9; col++) {
-    timingCoords.add(`6,${col}`);
+    maskPositions.push({ row: 6, col });
   }
 
   for (let row = 8; row <= size - 9; row++) {
-    timingCoords.add(`${row},6`);
+    maskPositions.push({ row, col: 6 });
   }
 
-  return (row: number, col: number) => {
-    return timingCoords.has(`${row},${col}`);
-  };
+  return maskPositions;
 };
