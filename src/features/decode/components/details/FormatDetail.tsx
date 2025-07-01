@@ -1,30 +1,26 @@
 import { useEffect } from "react";
 import { LiaKeySolid } from "react-icons/lia";
 
-import { detectFormatPositions } from "../../utils/createFormatMask";
-
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
 import { ECC_MAP } from "@/constants/eccMap";
 import { FORMAT_MASK } from "@/constants/formatMask";
+import { detectFormatPositionsTopLeft } from "@/features/decode/utils/createFormatMask";
 import Text from "@/ui/Text";
 
 const FormatDetail = ({ matrix, color, setFormatInfo }: DetailProps) => {
-  const positions = detectFormatPositions(matrix);
+  const positions = detectFormatPositionsTopLeft(matrix);
+  const rawBitsStr = positions.map((pos) => pos.value).join("");
 
-  const formatBits = positions.slice(0, 15).map((p) => p.value);
-  const rawBitsNumber = formatBits.reduce((acc, bit) => (acc << 1) | bit, 0);
-  const rawBitsStr = rawBitsNumber.toString(2).padStart(15, "0");
-
-  const unmaskedBitsNumber = rawBitsNumber ^ FORMAT_MASK;
+  const unmaskedBitsNumber = parseInt(rawBitsStr, 2) ^ FORMAT_MASK;
   const unmaskedBitsStr = unmaskedBitsNumber.toString(2).padStart(15, "0");
 
-  const Info = unmaskedBitsNumber >> 10;
+  const formatInfoBits = unmaskedBitsNumber >> 10;
 
-  const eccBits = (Info >> 3) & 0b11;
-  const maskPattern = Info & 0b111;
-
+  const eccBits = (formatInfoBits >> 3) & 0b11;
+  const maskPattern = formatInfoBits & 0b111;
   const eccLevel = ECC_MAP[eccBits] ?? "알 수 없음";
+
   useEffect(() => {
     setFormatInfo((prev) => ({
       ...prev,

@@ -1,17 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
-import { parseDataBits } from "@/features/decode/utils/createDataMask";
+import { createDataMask, getMaskBit } from "@/features/decode/utils/createDataMask";
 import Text from "@/ui/Text";
 
 const DataDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
-  const bitsStr = parseDataBits(matrix, formatInfo.maskPattern);
+  const maskPattern = formatInfo.maskPattern;
+  const maskedMatrix = useMemo(() => createDataMask(matrix), [matrix]);
+  const unmaskedMatrix = useMemo(
+    () =>
+      maskedMatrix.map(({ row, col }) => ({
+        row,
+        col,
+        value: matrix[row][col] ^ getMaskBit(row, col, maskPattern),
+      })),
+    [maskedMatrix, matrix, maskPattern],
+  );
+
+  const bitsStr = useMemo(() => unmaskedMatrix.map((p) => p.value).join(""), [unmaskedMatrix]);
   useEffect(() => {
-    setFormatInfo((prev) => ({
-      ...prev,
-      dataBits: bitsStr,
-    }));
+    setFormatInfo((prev) => (prev.dataBits === bitsStr ? prev : { ...prev, dataBits: bitsStr }));
   }, [bitsStr, setFormatInfo]);
 
   return (

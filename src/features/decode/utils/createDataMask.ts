@@ -3,7 +3,7 @@ import { createFormatMask } from "@/features/decode/utils/createFormatMask";
 import { createTimingMask } from "@/features/decode/utils/createTimingMask";
 import { getVersionByMatrixSize } from "@/features/decode/utils/getVersionByMatrixSize";
 
-function isSeparator(r: number, c: number, size: number) {
+const isSeparator = (r: number, c: number, size: number) => {
   if (r === 7 && c <= 7) return true;
   if (c === 7 && r <= 7) return true;
 
@@ -13,27 +13,36 @@ function isSeparator(r: number, c: number, size: number) {
   if (r === size - 8 && c <= 7) return true;
   if (c === 7 && r >= size - 8) return true;
   return false;
-}
+};
 
-function isVersionInfo(row: number, col: number, size: number, version: number): boolean {
+const isVersionInfo = (row: number, col: number, size: number, version: number): boolean => {
   if (version < 7) return false;
   if (row <= 5 && col >= size - 11 && col <= size - 9) return true;
   if (row >= size - 11 && row <= size - 9 && col <= 5) return true;
   return false;
-}
+};
 
-function isDarkModule(row: number, col: number, version: number): boolean {
+const isDarkModule = (row: number, col: number, version: number): boolean => {
   if (version < 1) return false;
   return row === 4 * version + 9 && col === 8;
-}
+};
 
-export function createReservedMap(matrix: number[][]) {
+export const createReservedMap = (matrix: number[][]) => {
   const size = matrix.length;
   const version = getVersionByMatrixSize(size)!;
 
-  const isTiming = createTimingMask(matrix);
-  const isFormat = createFormatMask(matrix);
-  const isFinderOrAlignment = createFinderMask(matrix);
+  const timingMask = createTimingMask(matrix);
+  const formatMask = createFormatMask(matrix);
+  const finderOrAlignmentMask = createFinderMask(matrix);
+
+  const isTiming = (row: number, col: number) =>
+    timingMask.some((pos) => pos.row === row && pos.col === col);
+
+  const isFormat = (row: number, col: number) =>
+    formatMask.some((pos) => pos.row === row && pos.col === col);
+
+  const isFinderOrAlignment = (row: number, col: number) =>
+    finderOrAlignmentMask.some((pos) => pos.row === row && pos.col === col);
 
   const reservedMap: boolean[][] = [];
 
@@ -47,13 +56,15 @@ export function createReservedMap(matrix: number[][]) {
         || isSeparator(row, col, size)
         || isDarkModule(row, col, version)
         || isVersionInfo(row, col, size, version);
+
       reservedMap[row][col] = reserved;
     }
   }
-  return reservedMap;
-}
 
-export function getDataModuleCoordinates(matrix: number[][], reservedMap: boolean[][]) {
+  return reservedMap;
+};
+
+export const getDataModuleCoordinates = (matrix: number[][], reservedMap: boolean[][]) => {
   const size = matrix.length;
   const coords: { row: number; col: number }[] = [];
 
@@ -80,12 +91,13 @@ export function getDataModuleCoordinates(matrix: number[][], reservedMap: boolea
       }
     }
     col -= 2;
+    if (col === 6) col--;
     upwards = !upwards;
   }
   return coords;
-}
+};
 
-function getMaskBit(row: number, col: number, pattern: number) {
+export const getMaskBit = (row: number, col: number, pattern: number) => {
   switch (pattern) {
     case 0:
       return (row + col) % 2 === 0 ? 1 : 0;
@@ -106,26 +118,11 @@ function getMaskBit(row: number, col: number, pattern: number) {
     default:
       throw new Error("Invalid mask pattern");
   }
-}
+};
 
-export function unmaskDataMatrix(matrix: number[][], maskPattern: number) {
-  const reservedMap = createReservedMap(matrix);
-  return matrix.map((row, r) =>
-    row.map((bit, c) => (reservedMap[r][c] ? bit : bit ^ getMaskBit(r, c, maskPattern))),
-  );
-}
-
-export function parseDataBits(maskedMatrix: number[][], maskPattern: number): string {
-  const unmasked = unmaskDataMatrix(maskedMatrix, maskPattern);
-  const reservedMap = createReservedMap(unmasked);
-  const coords = getDataModuleCoordinates(unmasked, reservedMap);
-
-  return coords.map(({ row, col }) => unmasked[row][col]).join("");
-}
-
-export function createDataMask(qrMatrix: number[][]) {
+export const createDataMask = (qrMatrix: number[][]) => {
   const reservedMap = createReservedMap(qrMatrix);
   const dataModules = getDataModuleCoordinates(qrMatrix, reservedMap);
 
-  return (row: number, col: number) => dataModules.some((p) => p.row === row && p.col === col);
-}
+  return dataModules;
+};
