@@ -9,9 +9,10 @@ import Text from "@/ui/Text";
 interface ProcessStepperProps {
   currentStep: DecodeStep;
   setCurrentStep: Dispatch<SetStateAction<DecodeStep>>;
+  isPlaying: boolean;
 }
 
-const ProcessStepper = ({ currentStep, setCurrentStep }: ProcessStepperProps) => {
+const ProcessStepper = ({ currentStep, setCurrentStep, isPlaying }: ProcessStepperProps) => {
   return (
     <Card>
       <Text
@@ -28,7 +29,7 @@ const ProcessStepper = ({ currentStep, setCurrentStep }: ProcessStepperProps) =>
             tone={currentStep === step ? "pick" : "subtle"}
             padding="sm"
             className="flex gap-4 px-8 cursor-pointer hover:bg-gray-600 border duration-100"
-            onClick={() => setCurrentStep(step)}
+            onClick={isPlaying ? undefined : () => setCurrentStep(step)}
           >
             <Dot color={color} />
             <div>

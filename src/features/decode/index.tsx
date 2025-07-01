@@ -46,10 +46,14 @@ const Decode = () => {
         />
       </div>
       <div className="gap-2 flex flex-col">
-        <QrScanner setMatrix={setMatrix} />
+        <QrScanner
+          setMatrix={setMatrix}
+          isPlaying={isPlaying}
+        />
         <ProcessStepper
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
+          isPlaying={isPlaying}
         />
       </div>
     </div>

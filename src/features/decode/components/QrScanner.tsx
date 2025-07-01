@@ -7,10 +7,11 @@ import Input from "@/ui/Input";
 import Text from "@/ui/Text";
 interface QrScannerProps {
   setMatrix: Dispatch<SetStateAction<number[][]>>;
+  isPlaying: boolean;
 }
 const CONTAINER_ID = "qr-video-box";
 
-const QrScanner = ({ setMatrix }: QrScannerProps) => {
+const QrScanner = ({ setMatrix, isPlaying }: QrScannerProps) => {
   const { canvasRef, videoBoxRef, isCameraOn, handleFileChange, handleCameraToggle } =
     useQrScanner(setMatrix);
 
@@ -33,12 +34,14 @@ const QrScanner = ({ setMatrix }: QrScannerProps) => {
         tone="secondary"
         className="flex justify-center"
         onChange={handleFileChange}
+        disabled={isPlaying}
       />
       <Button
         layout="block"
         className="flex justify-center transition-colors duration-300 ease-in-out"
         intent={`${isCameraOn ? "danger" : "primary"}`}
         onClick={handleCameraToggle}
+        disabled={isPlaying}
       >
         {isCameraOn ? "카메라 중지" : "카메라 시작"}
       </Button>
