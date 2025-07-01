@@ -54,25 +54,31 @@ export function createFinderMask(qrMatrix: number[][]) {
   const finderPositions = detectFinderPositions(qrMatrix);
   const alignmentPositions = detectAlignmentPositions(version!, qrMatrix.length);
 
-  return (rowIndex: number, columnIndex: number) => {
-    const inFinder = finderPositions.some(({ rowStart, colStart }) => {
-      return (
-        rowIndex >= rowStart
-        && rowIndex < rowStart + 7
-        && columnIndex >= colStart
-        && columnIndex < colStart + 7
-      );
-    });
-    if (inFinder) return true;
+  const size = qrMatrix.length;
+  const maskPositions: Array<{ row: number; col: number }> = [];
 
-    const inAlignment = alignmentPositions.some(({ row, col }) => {
-      return (
-        rowIndex >= row - 2
-        && rowIndex <= row + 2
-        && columnIndex >= col - 2
-        && columnIndex <= col + 2
-      );
-    });
-    return inAlignment;
-  };
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      const inFinder = finderPositions.some(({ rowStart, colStart }) => {
+        return row >= rowStart && row < rowStart + 7 && col >= colStart && col < colStart + 7;
+      });
+
+      if (inFinder) {
+        maskPositions.push({ row, col });
+        continue;
+      }
+
+      const inAlignment = alignmentPositions.some(({ row: alignRow, col: alignCol }) => {
+        return (
+          row >= alignRow - 2 && row <= alignRow + 2 && col >= alignCol - 2 && col <= alignCol + 2
+        );
+      });
+
+      if (inAlignment) {
+        maskPositions.push({ row, col });
+      }
+    }
+  }
+
+  return maskPositions;
 }
