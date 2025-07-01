@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type { FormatInfo } from "../types/formatInfo";
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
+import type { FormatInfo } from "@/features/decode/types/formatInfo";
 
 import { COLOR_MAP } from "@/constants/colorMap";
 import { SPEED_OPTIONS } from "@/constants/simulationSpeed";
@@ -43,6 +43,9 @@ const QrMatrixPlayer = ({ matrix, currentStep }: QrMatrixPlayerProps) => {
       setFilledCells((prev) => new Set(prev).add(`${row},${col}`));
       currentIndex++;
     }, animationSpeed);
+    return () => {
+      clearInterval(interval);
+    };
   }, [animationSpeed, maskFn, matrix, position]);
 
   return (
@@ -94,7 +97,7 @@ const QrMatrixPlayer = ({ matrix, currentStep }: QrMatrixPlayerProps) => {
               {row.map((bit, colIndex) => {
                 const base = bit ? "bg-black" : "bg-white";
                 const hasPosition = filledCells.has(`${rowIndex},${colIndex}`);
-                const isCellHighlighted = hasPosition ? highlightColor : base;
+                const isCellHighlighted = hasPosition && maskFn ? highlightColor : base;
 
                 return (
                   <div
