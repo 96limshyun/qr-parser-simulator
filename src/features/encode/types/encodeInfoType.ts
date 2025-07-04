@@ -9,4 +9,6 @@ export interface EncodeInfoType {
   length: number;
   modeIndicatorBits: ModeIndicatorBitsType;
   errorCorrectionLevel: ErrorCorrectionLevelType;
+  smallestVersion: null | number;
+  bitStream: string;
 }

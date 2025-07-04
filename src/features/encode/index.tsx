@@ -19,6 +19,8 @@ const Encode = () => {
     length: 0,
     modeIndicatorBits: "0001",
     errorCorrectionLevel: "L (7% 복원)",
+    smallestVersion: null,
+    bitStream: "",
   });
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
