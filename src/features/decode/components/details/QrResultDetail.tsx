@@ -22,7 +22,6 @@ const QrResultDetail = ({ formatInfo }: DetailProps) => {
         Alignment 등 기능 패턴 영역을 제외한 모듈들만 데이터로 사용됩니다.
       </Text>
 
-      {/* dataBits */}
       <Text
         fontWeight="bold"
         fontSize="sm"
@@ -40,7 +39,6 @@ const QrResultDetail = ({ formatInfo }: DetailProps) => {
         총 비트 길이: {bitsStr?.length || 0} bits
       </Text>
 
-      {/* ECC 정보 */}
       <Text
         fontWeight="bold"
         fontSize="sm"
@@ -53,7 +51,6 @@ const QrResultDetail = ({ formatInfo }: DetailProps) => {
       </div>
       <Text color="gray">총 코드워드 수: {formatInfo.eccCorrected?.length || 0} 개</Text>
 
-      {/* 디코딩된 텍스트 */}
       <Text
         fontWeight="bold"
         fontSize="sm"
@@ -65,7 +62,6 @@ const QrResultDetail = ({ formatInfo }: DetailProps) => {
         {decodedText}
       </div>
 
-      {/* 추가 정보 */}
       <div className="mt-4 space-y-1">
         <Text color="gray">Version: {formatInfo.version}</Text>
         <Text color="gray">Mask Pattern: {formatInfo.maskPattern}</Text>

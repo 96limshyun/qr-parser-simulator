@@ -94,7 +94,6 @@ const DataDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
         Finder, Timing, Format, Alignment 등 기능 패턴 영역을 제외한 모듈들만 데이터로 사용됩니다.
       </Text>
 
-      {/* 데이터 비트 */}
       <Text
         fontWeight="bold"
         fontSize="sm"
@@ -106,7 +105,6 @@ const DataDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
         {bitsStr || "(데이터 없음)"}
       </div>
 
-      {/* 비트 길이, 모드, 글자 수 */}
       <div className="mt-2 space-y-1">
         <Text color="gray">총 비트 길이: {bitsStr.length} bits</Text>
         <Text color="gray">모드: {mode}</Text>
