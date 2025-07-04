@@ -1,4 +1,4 @@
-import AnalyzeDetail from "../components/details/AnalyzeDetail";
+import AnalyzeDetail from "@/features/encode/components/details/AnalyzeDetail";
 
 export const ENCODE_STEPS = [
   {

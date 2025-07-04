@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 
+import type { EncodeInfoType } from "@/features/encode/types/encodeInfoType";
 import type { EncodeStep } from "@/features/encode/types/encodeStep";
 
 import ProcessStepper from "@/features/encode/components/ProcessStepper";
@@ -13,6 +14,11 @@ const Encode = () => {
   const [inputValue, setInputValue] = useState("");
   const [currentStep, setCurrentStep] = useState<EncodeStep>("Init");
   const [isPlaying, setIsPlaying] = useState(false);
+  const [encodeInfo, setEncodeInfo] = useState<EncodeInfoType>({
+    mode: "Byte",
+    length: 0,
+    modeIndicatorBits: "0001",
+  });
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
   };
@@ -29,6 +35,9 @@ const Encode = () => {
         <StepDetailCard
           matrix={matrix}
           currentStep={currentStep}
+          inputValue={inputValue}
+          encodeInfo={encodeInfo}
+          setEncodeInfo={setEncodeInfo}
         />
       </div>
       <div className="gap-2 flex flex-col">
