@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
 import type { FormatInfo } from "@/features/decode/types/formatInfo";
 
-import { DEFAULT_DECODE_INFO } from "@/constants/defaultDecodeInfo";
-import { DEFAULT_MATRIX } from "@/constants/defaultMatrix";
 import ProcessStepper from "@/features/decode/components/ProcessStepper";
 import QrMatrixPlayer from "@/features/decode/components/QrMatrixPlayer";
 import QrScanner from "@/features/decode/components/QrScanner";
 import StepDetailCard from "@/features/decode/components/StepDetailCard";
+import { DEFAULT_DECODE_INFO } from "@/features/decode/constants/defaultDecodeInfo";
+import { DEFAULT_MATRIX } from "@/features/decode/constants/defaultMatrix";
 import { getVersionByMatrixSize } from "@/features/decode/utils/getVersionByMatrixSize";
 
 const Decode = () => {
