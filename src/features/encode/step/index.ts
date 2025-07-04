@@ -1,4 +1,5 @@
 import AnalyzeDetail from "@/features/encode/components/details/AnalyzeDetail";
+import EncodeDataDetail from "@/features/encode/components/details/EncodeDataDetail";
 
 export const ENCODE_STEPS = [
   {
@@ -25,7 +26,7 @@ export const ENCODE_STEPS = [
     description: "데이터를 선택된 모드로 인코딩하여 비트열을 생성합니다.",
     color: "blue",
     processFn: undefined,
-    stepDetailComponent: undefined,
+    stepDetailComponent: EncodeDataDetail,
     processFnArgs: ["inputData", "mode"],
   },
   {

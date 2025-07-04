@@ -18,11 +18,12 @@ const AnalyzeDetail = ({ inputValue, encodeInfo, setEncodeInfo }: AnalyzeDetailP
     foundMode ? (foundMode.modeIndicatorBits as ModeIndicatorBitsType) : "0100";
 
   useEffect(() => {
-    setEncodeInfo({
+    setEncodeInfo((prev) => ({
+      ...prev,
       mode,
       length: inputValue.length,
       modeIndicatorBits,
-    });
+    }));
   }, [inputValue]);
 
   return (
@@ -35,6 +36,15 @@ const AnalyzeDetail = ({ inputValue, encodeInfo, setEncodeInfo }: AnalyzeDetailP
           입력 값:
         </Text>
         <Text color="black">{inputValue || "(빈 입력)"}</Text>
+      </div>
+      <div className="flex gap-2">
+        <Text
+          color="gray"
+          fontWeight="medium"
+        >
+          오류 정정 레벨:
+        </Text>
+        <Text color="black">{encodeInfo.errorCorrectionLevel}</Text>
       </div>
 
       <div className="flex gap-2">

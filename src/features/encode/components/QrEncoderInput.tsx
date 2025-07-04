@@ -1,4 +1,9 @@
+import type {
+  EncodeInfoType,
+  ErrorCorrectionLevelType,
+} from "@/features/encode/types/encodeInfoType";
 import type React from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import Card from "@/ui/Card";
 import Input from "@/ui/Input";
@@ -8,9 +13,21 @@ interface QrEncoderInputProps {
   inputValue: string;
   // eslint-disable-next-line no-unused-vars
   onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  errorCorrectionLevel: ErrorCorrectionLevelType;
+  setEncodeInfo: Dispatch<SetStateAction<EncodeInfoType>>;
 }
 
-const QrEncoderInput = ({ inputValue, onInputChange }: QrEncoderInputProps) => {
+const QrEncoderInput = ({
+  inputValue,
+  onInputChange,
+  errorCorrectionLevel,
+  setEncodeInfo,
+}: QrEncoderInputProps) => {
+  const onErrorCorrectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newErrorCorrectionLevel = event.target.value as ErrorCorrectionLevelType;
+    setEncodeInfo((prev) => ({ ...prev, errorCorrectionLevel: newErrorCorrectionLevel }));
+  };
+
   return (
     <Card className="w-full flex flex-col items-center justify-center gap-2">
       <Text
@@ -28,6 +45,31 @@ const QrEncoderInput = ({ inputValue, onInputChange }: QrEncoderInputProps) => {
         value={inputValue}
         onChange={onInputChange}
       />
+      <div className="w-full flex flex-col gap-1 mt-2">
+        <Text
+          fontSize="sm"
+          fontWeight="medium"
+          color="gray"
+        >
+          오류 정정 레벨 선택
+        </Text>
+        <select
+          value={errorCorrectionLevel}
+          onChange={onErrorCorrectionChange}
+          className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="L">L (7% 복원)</option>
+          <option value="M">M (15% 복원)</option>
+          <option value="Q">Q (25% 복원)</option>
+          <option value="H">H (30% 복원)</option>
+        </select>
+        <Text
+          fontSize="xs"
+          color="gray"
+        >
+          높은 레벨일수록 손상 복원력은 높아지지만 QR 코드가 커집니다.
+        </Text>
+      </div>
     </Card>
   );
 };

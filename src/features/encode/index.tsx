@@ -18,6 +18,7 @@ const Encode = () => {
     mode: "Byte",
     length: 0,
     modeIndicatorBits: "0001",
+    errorCorrectionLevel: "L (7% 복원)",
   });
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
@@ -44,6 +45,8 @@ const Encode = () => {
         <QrEncoderInput
           inputValue={inputValue}
           onInputChange={handleInputChange}
+          errorCorrectionLevel={encodeInfo.errorCorrectionLevel}
+          setEncodeInfo={setEncodeInfo}
         />
         <ProcessStepper
           currentStep={currentStep}
