@@ -11,9 +11,5 @@ export const DEFAULT_DECODE_INFO = {
   dataBits: "",
   decodedText: "",
   decodedBytes: [],
-  errorCorrection: {
-    totalCodewords: 0,
-    ecCodewordsPerBlock: 0,
-    numBlocks: 0,
-  },
+  eccCorrected: [],
 };

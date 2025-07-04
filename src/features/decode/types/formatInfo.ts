@@ -15,9 +15,5 @@ export interface FormatInfo {
   decodedText: string;
   decodedBytes: number[];
 
-  errorCorrection?: {
-    totalCodewords: number;
-    ecCodewordsPerBlock: number;
-    numBlocks: number;
-  };
+  eccCorrected: number[];
 }

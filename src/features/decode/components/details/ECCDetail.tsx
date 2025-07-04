@@ -9,7 +9,9 @@ import Text from "@/ui/Text";
 const ECCDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
   const eccLevel = formatInfo.eccLevel.split(" ")[0] as "L" | "M" | "Q" | "H";
   const eccInfo = getECCInfo(formatInfo.version, eccLevel);
-
+  useEffect(() => {
+    console.log(formatInfo);
+  }, [formatInfo]);
   useEffect(() => {
     if (!eccInfo) return;
 
@@ -52,7 +54,7 @@ const ECCDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
     } catch (error) {
       console.error("ECC decoding failed:", error);
     }
-  }, [eccInfo, formatInfo.dataBits, matrix, formatInfo, setFormatInfo]);
+  }, [eccInfo, formatInfo.dataBits, matrix, setFormatInfo]);
 
   if (!eccInfo) {
     console.error(

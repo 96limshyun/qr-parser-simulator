@@ -1,7 +1,36 @@
+import { ALPHANUMERIC_TABLE } from "@/constants/alphanumericTable";
 import { createFinderMask } from "@/features/decode/utils/createFinderMask";
 import { createFormatMask } from "@/features/decode/utils/createFormatMask";
 import { createTimingMask } from "@/features/decode/utils/createTimingMask";
 import { getVersionByMatrixSize } from "@/features/decode/utils/getVersionByMatrixSize";
+
+export const decodeAlphanumeric = (dataBits: string, characterCount: number) => {
+  let pointer = 0;
+  let result = "";
+
+  while (characterCount >= 2) {
+    const bits11 = dataBits.slice(pointer, pointer + 11);
+    if (bits11.length < 11) break;
+
+    const value = parseInt(bits11, 2);
+    const firstCharIndex = Math.floor(value / 45);
+    const secondCharIndex = value % 45;
+
+    result += ALPHANUMERIC_TABLE[firstCharIndex];
+    result += ALPHANUMERIC_TABLE[secondCharIndex];
+
+    pointer += 11;
+    characterCount -= 2;
+  }
+
+  if (characterCount === 1) {
+    const bits6 = dataBits.slice(pointer, pointer + 6);
+    const value = parseInt(bits6, 2);
+    result += ALPHANUMERIC_TABLE[value];
+  }
+
+  return result;
+};
 
 const isSeparator = (r: number, c: number, size: number) => {
   if (r === 7 && c <= 7) return true;
@@ -97,28 +126,16 @@ export const getDataModuleCoordinates = (matrix: number[][], reservedMap: boolea
   return coords;
 };
 
-export const getMaskBit = (row: number, col: number, pattern: number) => {
-  switch (pattern) {
-    case 0:
-      return (row + col) % 2 === 0 ? 1 : 0;
-    case 1:
-      return row % 2 === 0 ? 1 : 0;
-    case 2:
-      return col % 3 === 0 ? 1 : 0;
-    case 3:
-      return (row + col) % 3 === 0 ? 1 : 0;
-    case 4:
-      return (Math.floor(row / 2) + Math.floor(col / 3)) % 2 === 0 ? 1 : 0;
-    case 5:
-      return ((row * col) % 2) + ((row * col) % 3) === 0 ? 1 : 0;
-    case 6:
-      return (((row * col) % 2) + ((row * col) % 3)) % 2 === 0 ? 1 : 0;
-    case 7:
-      return (((row + col) % 2) + ((row * col) % 3)) % 2 === 0 ? 1 : 0;
-    default:
-      throw new Error("Invalid mask pattern");
-  }
-};
+export const DATA_MASKS = [
+  (p: { row: number; col: number }) => (p.row + p.col) % 2 === 0,
+  (p: { row: number; col: number }) => p.row % 2 === 0,
+  (p: { row: number; col: number }) => p.col % 3 === 0,
+  (p: { row: number; col: number }) => (p.row + p.col) % 3 === 0,
+  (p: { row: number; col: number }) => (Math.floor(p.row / 2) + Math.floor(p.col / 3)) % 2 === 0,
+  (p: { row: number; col: number }) => ((p.col * p.row) % 2) + ((p.col * p.row) % 3) === 0,
+  (p: { row: number; col: number }) => (((p.row * p.col) % 2) + ((p.row * p.col) % 3)) % 2 === 0,
+  (p: { row: number; col: number }) => (((p.row + p.col) % 2) + ((p.row * p.col) % 3)) % 2 === 0,
+];
 
 export const createDataMask = (qrMatrix: number[][]) => {
   const reservedMap = createReservedMap(qrMatrix);

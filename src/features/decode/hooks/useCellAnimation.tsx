@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 interface CellAnimationProps {
   animationSpeed: number;
-  position: { row: number; col: number }[] | (() => boolean);
+  position: { row: number; col: number }[];
   matrix: number[][];
 }
 

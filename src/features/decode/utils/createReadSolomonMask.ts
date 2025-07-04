@@ -29,7 +29,7 @@ export const createReadSolomonMask = (qrMatrix: number[][], formatInfo: FormatIn
     console.error(
       `ECC info not found for version ${formatInfo.version} / level ${formatInfo.eccLevel}`,
     );
-    return () => false;
+    return [];
   }
 
   const eccStartBit = eccInfo.totalDataCodewords * 8;

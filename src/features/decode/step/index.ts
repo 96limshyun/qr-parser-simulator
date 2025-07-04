@@ -1,8 +1,9 @@
 import ECCDetail from "../components/details/ECCDetail";
 
-import DataDetail from "@/features/decode/components/details/dataDetail";
+import DataDetail from "@/features/decode/components/details/DataDetail";
 import FinderDetail from "@/features/decode/components/details/FinderDetail";
 import FormatDetail from "@/features/decode/components/details/FormatDetail";
+import QrResultDetail from "@/features/decode/components/details/QrResultDetail";
 import TimingDetail from "@/features/decode/components/details/TimingDetail";
 import { createDataMask } from "@/features/decode/utils/createDataMask";
 import { createFinderMask } from "@/features/decode/utils/createFinderMask";
@@ -71,6 +72,6 @@ export const DECODE_STEPS = [
     description: "최종 데이터를 디코딩합니다.",
     color: "emerald",
     maskFn: undefined,
-    stepDetailComponent: undefined,
+    stepDetailComponent: QrResultDetail,
   },
 ] as const;
