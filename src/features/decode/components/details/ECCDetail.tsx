@@ -9,9 +9,7 @@ import Text from "@/ui/Text";
 const ECCDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
   const eccLevel = formatInfo.eccLevel.split(" ")[0] as "L" | "M" | "Q" | "H";
   const eccInfo = getECCInfo(formatInfo.version, eccLevel);
-  useEffect(() => {
-    console.log(formatInfo);
-  }, [formatInfo]);
+
   useEffect(() => {
     if (!eccInfo) return;
 

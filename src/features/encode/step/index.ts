@@ -1,4 +1,5 @@
 import AnalyzeDetail from "@/features/encode/components/details/AnalyzeDetail";
+import EccDetail from "@/features/encode/components/details/EccDetail";
 import EncodeDataDetail from "@/features/encode/components/details/EncodeDataDetail";
 
 export const ENCODE_STEPS = [
@@ -35,7 +36,7 @@ export const ENCODE_STEPS = [
     description: "리드-솔로몬 알고리즘을 이용해 오류 정정 코드를 생성합니다.",
     color: "green",
     processFn: undefined,
-    stepDetailComponent: undefined,
+    stepDetailComponent: EccDetail,
     processFnArgs: ["dataBits"],
   },
   {
