@@ -10,7 +10,6 @@ export const ENCODE_STEPS = [
     color: "gray",
     processFn: undefined,
     stepDetailComponent: undefined,
-    processFnArgs: [],
   },
   {
     step: "Analyze",
@@ -19,7 +18,6 @@ export const ENCODE_STEPS = [
     color: "red",
     processFn: undefined,
     stepDetailComponent: AnalyzeDetail,
-    processFnArgs: ["inputData"],
   },
   {
     step: "EncodeData",
@@ -28,7 +26,6 @@ export const ENCODE_STEPS = [
     color: "blue",
     processFn: undefined,
     stepDetailComponent: EncodeDataDetail,
-    processFnArgs: ["inputData", "mode"],
   },
   {
     step: "AddECC",
@@ -37,7 +34,6 @@ export const ENCODE_STEPS = [
     color: "green",
     processFn: undefined,
     stepDetailComponent: EccDetail,
-    processFnArgs: ["dataBits"],
   },
   {
     step: "BuildMatrix",
@@ -46,7 +42,6 @@ export const ENCODE_STEPS = [
     color: "purple",
     processFn: undefined,
     stepDetailComponent: undefined,
-    processFnArgs: ["dataBits", "eccBits", "maskPattern"],
   },
   {
     step: "Mask",
@@ -55,7 +50,6 @@ export const ENCODE_STEPS = [
     color: "orange",
     processFn: undefined,
     stepDetailComponent: undefined,
-    processFnArgs: ["matrix"],
   },
   {
     step: "Finalize",

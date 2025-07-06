@@ -1,7 +1,4 @@
-import type {
-  EncodeInfoType,
-  ErrorCorrectionLevelType,
-} from "@/features/encode/types/encodeInfoType";
+import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 import type React from "react";
 import type { Dispatch, SetStateAction } from "react";
 
@@ -13,19 +10,19 @@ interface QrEncoderInputProps {
   inputValue: string;
   // eslint-disable-next-line no-unused-vars
   onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  errorCorrectionLevel: ErrorCorrectionLevelType;
-  setEncodeInfo: Dispatch<SetStateAction<EncodeInfoType>>;
+  errorCorrectionLevel: ErrorCorrectionLevel;
+  setErrorCorrectionLevel: Dispatch<SetStateAction<ErrorCorrectionLevel>>;
 }
 
 const QrEncoderInput = ({
   inputValue,
   onInputChange,
   errorCorrectionLevel,
-  setEncodeInfo,
+  setErrorCorrectionLevel,
 }: QrEncoderInputProps) => {
   const onErrorCorrectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newErrorCorrectionLevel = event.target.value as ErrorCorrectionLevelType;
-    setEncodeInfo((prev) => ({ ...prev, errorCorrectionLevel: newErrorCorrectionLevel }));
+    const newErrorCorrectionLevel = event.target.value as ErrorCorrectionLevel;
+    setErrorCorrectionLevel(newErrorCorrectionLevel);
   };
 
   return (

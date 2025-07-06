@@ -1,4 +1,4 @@
-import DataDetail from "@/features/decode/components/details/DataDetail";
+import DataDetail from "@/features/decode/components/details/dataDetail";
 import ECCDetail from "@/features/decode/components/details/ECCDetail";
 import FinderDetail from "@/features/decode/components/details/FinderDetail";
 import FormatDetail from "@/features/decode/components/details/FormatDetail";

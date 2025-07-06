@@ -13,7 +13,7 @@ interface QrMatrixPlayerProps {
   matrix: number[][];
   isPlaying: boolean;
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
-  setCurrentStep?: Dispatch<SetStateAction<EncodeStep>>;
+  setCurrentStep: Dispatch<SetStateAction<EncodeStep>>;
 }
 const QrMatrixPlayer = ({
   matrix,
@@ -27,7 +27,7 @@ const QrMatrixPlayer = ({
   const handleToggleBorder = () => setIsShowBorder((prev) => !prev);
 
   const handleResetClick = () => {
-    setCurrentStep?.("Init");
+    setCurrentStep("Init");
     setIsPlaying(false);
   };
   return (

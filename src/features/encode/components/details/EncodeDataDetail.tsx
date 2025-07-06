@@ -1,49 +1,13 @@
-import { useEffect, type Dispatch, type SetStateAction } from "react";
+import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
 
-import { buildBitStream } from "../../utils/buildBitStream";
-
-import type { EncodeInfoType } from "../../types/encodeInfoType";
-import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
-
-import { VERSION_CAPACITY_TABLE } from "@/constants/versionCapacityTable";
 import Text from "@/ui/Text";
 
 interface EncodeDataDetailProps {
-  inputValue: string;
-  encodeInfo: EncodeInfoType;
-  setEncodeInfo: Dispatch<SetStateAction<EncodeInfoType>>;
+  encodeInfo: QREncoderResult;
 }
 
-const EncodeDataDetail = ({ inputValue, encodeInfo, setEncodeInfo }: EncodeDataDetailProps) => {
-  const { length, mode, errorCorrectionLevel } = encodeInfo;
-  let smallestVersion: number | null = null;
-
-  for (let version = 1; version <= 40; version++) {
-    const capacity =
-      VERSION_CAPACITY_TABLE[version]?.[
-        errorCorrectionLevel.split(" ")[0] as ErrorCorrectionLevel
-      ]?.[mode];
-    if (capacity !== undefined && length <= capacity) {
-      smallestVersion = version;
-      break;
-    }
-  }
-
-  const bitStream = buildBitStream({
-    mode,
-    modeIndicatorBits: encodeInfo.modeIndicatorBits,
-    version: smallestVersion || 1,
-    data: inputValue,
-    ecLevel: errorCorrectionLevel.split(" ")[0] as ErrorCorrectionLevel,
-  });
-
-  useEffect(() => {
-    setEncodeInfo((prev) => ({
-      ...prev,
-      smallestVersion,
-      bitStream,
-    }));
-  }, [inputValue, mode, errorCorrectionLevel, setEncodeInfo, smallestVersion, bitStream]);
+const EncodeDataDetail = ({ encodeInfo }: EncodeDataDetailProps) => {
+  const { mode, length, errorCorrectionLevel, text, smallestVersion, bitStream } = encodeInfo;
 
   return (
     <div className="space-y-4 text-sm leading-relaxed">
@@ -51,7 +15,7 @@ const EncodeDataDetail = ({ inputValue, encodeInfo, setEncodeInfo }: EncodeDataD
         fontWeight="bold"
         fontSize="lg"
       >
-        📐 2단계: 데이터의 가장 작은 버전 결정
+        데이터의 가장 작은 버전 결정
       </Text>
 
       <Text color="gray">
@@ -78,7 +42,7 @@ const EncodeDataDetail = ({ inputValue, encodeInfo, setEncodeInfo }: EncodeDataD
         ✨ 내 데이터 분석 결과
       </Text>
       <div className="space-y-1">
-        <Text>입력한 데이터: {inputValue || "(빈 입력)"}</Text>
+        <Text>입력한 데이터: {text || "(빈 입력)"}</Text>
         <Text>데이터 길이: {length}글자</Text>
         <Text>인코딩 모드: {mode}</Text>
         <Text>오류 정정 레벨: {errorCorrectionLevel}</Text>

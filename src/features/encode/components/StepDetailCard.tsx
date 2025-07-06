@@ -1,6 +1,5 @@
-import type { EncodeInfoType } from "@/features/encode/types/encodeInfoType";
 import type { EncodeStep } from "@/features/encode/types/encodeStep";
-import type { Dispatch, SetStateAction } from "react";
+import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
 
 import { ENCODE_STEPS } from "@/features/encode/step";
 import Card from "@/ui/Card";
@@ -8,19 +7,11 @@ import Dot from "@/ui/Dot";
 import Text from "@/ui/Text";
 
 interface StepDetailCardProps {
-  matrix: number[][];
   currentStep: EncodeStep;
-  inputValue: string;
-  encodeInfo: EncodeInfoType;
-  setEncodeInfo: Dispatch<SetStateAction<EncodeInfoType>>;
+  encodeInfo: QREncoderResult;
 }
 
-const StepDetailCard = ({
-  currentStep,
-  inputValue,
-  encodeInfo,
-  setEncodeInfo,
-}: StepDetailCardProps) => {
+const StepDetailCard = ({ currentStep, encodeInfo }: StepDetailCardProps) => {
   const stepConfig = ENCODE_STEPS.find((s) => s.step === currentStep);
 
   if (!stepConfig) return null;
@@ -44,11 +35,7 @@ const StepDetailCard = ({
         </Text>
       </div>
       {Detail ?
-        <Detail
-          inputValue={inputValue}
-          encodeInfo={encodeInfo}
-          setEncodeInfo={setEncodeInfo}
-        />
+        <Detail encodeInfo={encodeInfo} />
       : <Text color="gray">{description}</Text>}
     </Card>
   );

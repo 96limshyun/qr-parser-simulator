@@ -1,31 +1,12 @@
-import { useEffect, type Dispatch, type SetStateAction } from "react";
+import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
 
-import type { EncodeInfoType, ModeIndicatorBitsType } from "@/features/encode/types/encodeInfoType";
-
-import { CHECKS } from "@/features/encode/constants/modeChecks";
 import Text from "@/ui/Text";
 
 interface AnalyzeDetailProps {
-  inputValue: string;
-  encodeInfo: EncodeInfoType;
-  setEncodeInfo: Dispatch<SetStateAction<EncodeInfoType>>;
+  encodeInfo: QREncoderResult;
 }
 
-const AnalyzeDetail = ({ inputValue, encodeInfo, setEncodeInfo }: AnalyzeDetailProps) => {
-  const foundMode = CHECKS.find(({ regex }) => regex.test(inputValue));
-  const mode = foundMode ? foundMode.mode : "Byte";
-  const modeIndicatorBits =
-    foundMode ? (foundMode.modeIndicatorBits as ModeIndicatorBitsType) : "0100";
-
-  useEffect(() => {
-    setEncodeInfo((prev) => ({
-      ...prev,
-      mode,
-      length: inputValue.length,
-      modeIndicatorBits,
-    }));
-  }, [inputValue]);
-
+const AnalyzeDetail = ({ encodeInfo }: AnalyzeDetailProps) => {
   return (
     <div className="space-y-3 text-sm leading-relaxed">
       <div className="flex gap-2">
@@ -35,16 +16,16 @@ const AnalyzeDetail = ({ inputValue, encodeInfo, setEncodeInfo }: AnalyzeDetailP
         >
           입력 값:
         </Text>
-        <Text color="black">{inputValue || "(빈 입력)"}</Text>
+        <Text color="black">{encodeInfo.text || "(빈 입력)"}</Text>
       </div>
       <div className="flex gap-2">
         <Text
           color="gray"
           fontWeight="medium"
         >
-          오류 정정 레벨:
+          모드:
         </Text>
-        <Text color="black">{encodeInfo.errorCorrectionLevel}</Text>
+        <Text color="black">{encodeInfo.mode}</Text>
       </div>
 
       <div className="flex gap-2">
@@ -52,9 +33,19 @@ const AnalyzeDetail = ({ inputValue, encodeInfo, setEncodeInfo }: AnalyzeDetailP
           color="gray"
           fontWeight="medium"
         >
-          모드 결정:
+          모드 인디케이터 비트:
         </Text>
-        <Text fontFamily="mono">{encodeInfo.mode}</Text>
+        <Text>{encodeInfo.modeIndicatorBits}</Text>
+      </div>
+
+      <div className="flex gap-2">
+        <Text
+          color="gray"
+          fontWeight="medium"
+        >
+          모드 인디케이터 비트:
+        </Text>
+        <Text fontFamily="mono">{encodeInfo.modeIndicatorBits}</Text>
       </div>
 
       <div className="flex gap-2">
@@ -65,16 +56,6 @@ const AnalyzeDetail = ({ inputValue, encodeInfo, setEncodeInfo }: AnalyzeDetailP
           데이터 길이:
         </Text>
         <Text color="black">{encodeInfo.length} 글자</Text>
-      </div>
-
-      <div className="flex gap-2">
-        <Text
-          color="gray"
-          fontWeight="medium"
-        >
-          Mode Indicator Bits:
-        </Text>
-        <Text>{encodeInfo.modeIndicatorBits}</Text>
       </div>
 
       <div className="mt-4 space-y-2">

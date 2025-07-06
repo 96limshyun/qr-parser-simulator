@@ -5,6 +5,7 @@ export type ErrorCorrectionLevelType =
   | "Q (25% 복원)"
   | "H (30% 복원)";
 export interface EncodeInfoType {
+  text: string;
   mode: "Byte" | "Numeric" | "Alphanumeric";
   length: number;
   modeIndicatorBits: ModeIndicatorBitsType;
