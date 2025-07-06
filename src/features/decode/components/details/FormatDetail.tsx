@@ -1,35 +1,21 @@
-import { useEffect } from "react";
 import { LiaKeySolid } from "react-icons/lia";
 
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
-import { ECC_MAP } from "@/constants/eccMap";
-import { FORMAT_MASK } from "@/constants/formatMask";
-import { detectFormatPositionsTopLeft } from "@/features/decode/utils/createFormatMask";
 import Text from "@/ui/Text";
 
-const FormatDetail = ({ matrix, color, setFormatInfo }: DetailProps) => {
-  const positions = detectFormatPositionsTopLeft(matrix);
-  const rawBitsStr = positions.map((pos) => pos.value).join("");
+const FormatDetail = ({ color, qrDecoder, qrDecodeResult }: DetailProps) => {
+  const positions = qrDecoder.detectFormatPositions();
 
-  const unmaskedBitsNumber = parseInt(rawBitsStr, 2) ^ FORMAT_MASK;
-  const unmaskedBitsStr = unmaskedBitsNumber.toString(2).padStart(15, "0");
-
-  const formatInfoBits = unmaskedBitsNumber >> 10;
-
-  const eccBits = (formatInfoBits >> 3) & 0b11;
-  const maskPattern = formatInfoBits & 0b111;
-  const eccLevel = ECC_MAP[eccBits] ?? "알 수 없음";
-
-  useEffect(() => {
-    setFormatInfo((prev) => ({
-      ...prev,
-      rawBits: rawBitsStr,
-      unmaskedBits: unmaskedBitsStr,
-      eccLevel,
-      maskPattern,
-    }));
-  }, [matrix.length, setFormatInfo, rawBitsStr, unmaskedBitsStr, eccLevel, maskPattern]);
+  const formatInfo =
+    qrDecodeResult ?
+      {
+        rawBits: qrDecodeResult.rawFormatBits,
+        unmaskedBits: qrDecodeResult.unmaskedFormatBits,
+        eccLevel: qrDecodeResult.eccLevel,
+        maskPattern: qrDecodeResult.maskPattern,
+      }
+    : qrDecoder.decodeFormatInfo();
 
   return (
     <div className="space-y-2 text-sm leading-6">
@@ -71,25 +57,25 @@ const FormatDetail = ({ matrix, color, setFormatInfo }: DetailProps) => {
           fontSize="sm"
           color={color}
         >
-          포맷 원본 비트: {rawBitsStr}
+          포맷 원본 비트: {formatInfo.rawBits}
         </Text>
         <Text
           fontSize="sm"
           color={color}
         >
-          마스크 해제 후 비트: {unmaskedBitsStr}
+          마스크 해제 후 비트: {formatInfo.unmaskedBits}
         </Text>
         <Text
           fontSize="sm"
           color={color}
         >
-          오류 정정 수준: {eccLevel}
+          오류 정정 수준: {formatInfo.eccLevel}
         </Text>
         <Text
           fontSize="sm"
           color={color}
         >
-          마스크 패턴 번호: {maskPattern}번
+          마스크 패턴 번호: {formatInfo.maskPattern}번
         </Text>
       </div>
     </div>

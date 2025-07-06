@@ -1,9 +1,9 @@
-import type { FormatInfo } from "./formatInfo";
-import type { Dispatch, SetStateAction } from "react";
+import type { QRDecodeResult } from "@/libs/QRDecoder/types/QRDecodeResult";
+
+import { QRDecoder } from "@/libs/QRDecoder";
 
 export interface DetailProps {
-  matrix: number[][];
   color?: string | undefined;
-  formatInfo: FormatInfo;
-  setFormatInfo: Dispatch<SetStateAction<FormatInfo>>;
+  qrDecoder: QRDecoder;
+  qrDecodeResult: QRDecodeResult;
 }

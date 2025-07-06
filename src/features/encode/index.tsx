@@ -10,7 +10,7 @@ import StepDetailCard from "@/features/encode/components/StepDetailCard";
 import { DEFAULT_ENCODE_MATRIX } from "@/features/encode/constants/defaultEncodeMatrix";
 
 const Encode = () => {
-  const [matrix] = useState<number[][]>(DEFAULT_ENCODE_MATRIX);
+  const [matrix, setMatrix] = useState<number[][]>(DEFAULT_ENCODE_MATRIX);
   const [inputValue, setInputValue] = useState("");
   const [currentStep, setCurrentStep] = useState<EncodeStep>("Init");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -31,9 +31,12 @@ const Encode = () => {
       <div className="lg:col-span-2 gap-2 flex flex-col">
         <QrMatrixPlayer
           matrix={matrix}
+          setMatrix={setMatrix}
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
+          currentStep={currentStep}
           setCurrentStep={setCurrentStep}
+          encodeInfo={encodeInfo}
         />
         <StepDetailCard
           matrix={matrix}

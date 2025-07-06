@@ -1,83 +1,30 @@
-import { ReedSolomonDecoder, GenericGF } from "@zxing/library";
-import { useEffect } from "react";
-
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
-import { getECCInfo } from "@/features/decode/utils/getECCInfo";
 import Text from "@/ui/Text";
 
-const ECCDetail = ({ matrix, formatInfo, setFormatInfo }: DetailProps) => {
-  const eccLevel = formatInfo.eccLevel.split(" ")[0] as "L" | "M" | "Q" | "H";
-  const eccInfo = getECCInfo(formatInfo.version, eccLevel);
-
-  useEffect(() => {
-    if (!eccInfo) return;
-
-    const totalDataCodewords = eccInfo.totalDataCodewords;
-    const totalECCCodewords =
-      eccInfo.ecCodewordsPerBlock * (eccInfo.numBlocksGroup1 + eccInfo.numBlocksGroup2);
-
-    const totalDataBits = totalDataCodewords * 8;
-    const totalECCBits = totalECCCodewords * 8;
-
-    const fullBits = formatInfo.dataBits || "";
-
-    const dataBits = fullBits.slice(0, totalDataBits);
-    const eccBitsStr = fullBits.slice(totalDataBits, totalDataBits + totalECCBits);
-
-    const dataBytes = dataBits.match(/.{1,8}/g)?.map((byte) => parseInt(byte, 2) & 0xff) || [];
-    const dataCodewords = dataBytes.slice(0, totalDataCodewords);
-
-    const eccBytes = eccBitsStr.match(/.{1,8}/g)?.map((byte) => parseInt(byte, 2) & 0xff) || [];
-
-    if (dataCodewords.length === 0 || eccBytes.length === 0) return;
-
-    const allCodewordsUint8 = Uint8Array.from([...dataCodewords, ...eccBytes]);
-
-    const allCodewords = Int32Array.from(allCodewordsUint8);
-
-    const gf = GenericGF.QR_CODE_FIELD_256;
-    const decoder = new ReedSolomonDecoder(gf);
-
-    try {
-      decoder.decode(allCodewords, totalECCCodewords);
-
-      const correctedDataCodewords = Array.from(allCodewords.slice(0, dataCodewords.length));
-
-      setFormatInfo((prev) => ({
-        ...prev,
-        eccCorrected: correctedDataCodewords,
-        eccErrorCount: 0,
-      }));
-    } catch (error) {
-      console.error("ECC decoding failed:", error);
-    }
-  }, [eccInfo, formatInfo.dataBits, matrix, setFormatInfo]);
-
-  if (!eccInfo) {
-    console.error(
-      `ECC info not found for version ${formatInfo.version} / level ${formatInfo.eccLevel}`,
-    );
+const ECCDetail = ({ qrDecodeResult }: DetailProps) => {
+  if (!qrDecodeResult) {
     return <div>Error: ECC info not found</div>;
   }
+  const {
+    totalDataCodewords,
+    totalECCCodewords,
+    totalCodewords,
+    dataBits,
+    dataCodewords,
+    eccBytes,
+  } = qrDecodeResult;
 
-  const totalDataCodewords = eccInfo.totalDataCodewords;
-  const totalECCCodewords =
-    eccInfo.ecCodewordsPerBlock * (eccInfo.numBlocksGroup1 + eccInfo.numBlocksGroup2);
-  const totalCodewords = totalDataCodewords + totalECCCodewords;
-
-  const totalDataBits = totalDataCodewords * 8;
-  const totalECCBits = totalECCCodewords * 8;
-
-  const fullBits = formatInfo.dataBits || "";
-
-  const dataBits = fullBits.slice(0, totalDataBits);
-  const eccBitsStr = fullBits.slice(totalDataBits, totalDataBits + totalECCBits);
-
-  const dataBytes = dataBits.match(/.{1,8}/g)?.map((byte) => parseInt(byte, 2) & 0xff) || [];
-  const dataCodewords = dataBytes.slice(0, totalDataCodewords);
-
-  const eccBytes = eccBitsStr.match(/.{1,8}/g)?.map((byte) => parseInt(byte, 2) & 0xff) || [];
+  if (
+    totalDataCodewords === undefined
+    || totalECCCodewords === undefined
+    || totalCodewords === undefined
+    || !dataBits
+    || !dataCodewords
+    || !eccBytes
+  ) {
+    return <div>Error: ECC info not found</div>;
+  }
 
   return (
     <div className="space-y-1 text-sm leading-6">

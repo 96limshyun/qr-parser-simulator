@@ -2,15 +2,13 @@ import type { DetailProps } from "@/features/decode/types/detailProps";
 
 import Text from "@/ui/Text";
 
-const QrResultDetail = ({ formatInfo }: DetailProps) => {
-  const bitsStr = formatInfo.dataBits;
+const QrResultDetail = ({ qrDecodeResult }: DetailProps) => {
+  const bitsStr = qrDecodeResult.unmaskedDataBits;
   const decodedBytesStr =
-    formatInfo.eccCorrected && formatInfo.eccCorrected.length > 0 ?
-      formatInfo.eccCorrected.join(", ")
+    qrDecodeResult.eccCorrected && qrDecodeResult.eccCorrected.length > 0 ?
+      qrDecodeResult.eccCorrected.join(", ")
     : "(없음)";
-  const decodedText = formatInfo.decodedText || "(없음)";
-
-  console.log("QrResultDetail formatInfo", formatInfo);
+  const decodedText = qrDecodeResult.decodedText || "(없음)";
 
   return (
     <div className="space-y-4 text-sm leading-6">
@@ -49,7 +47,7 @@ const QrResultDetail = ({ formatInfo }: DetailProps) => {
       <div className="bg-gray-800 text-white font-mono p-2 rounded text-xs break-all">
         {decodedBytesStr}
       </div>
-      <Text color="gray">총 코드워드 수: {formatInfo.eccCorrected?.length || 0} 개</Text>
+      <Text color="gray">총 코드워드 수: {qrDecodeResult.eccCorrected?.length || 0} 개</Text>
 
       <Text
         fontWeight="bold"
@@ -63,16 +61,18 @@ const QrResultDetail = ({ formatInfo }: DetailProps) => {
       </div>
 
       <div className="mt-4 space-y-1">
-        <Text color="gray">Version: {formatInfo.version}</Text>
-        <Text color="gray">Mask Pattern: {formatInfo.maskPattern}</Text>
-        <Text color="gray">ECC Level: {formatInfo.eccLevel}</Text>
-        <Text color="gray">모드 비트: {formatInfo.modeBits || "(없음)"}</Text>
-        <Text color="gray">모드: {formatInfo.mode || "(미확인)"}</Text>
+        <Text color="gray">Version: {qrDecodeResult.version}</Text>
+        <Text color="gray">Mask Pattern: {qrDecodeResult.maskPattern}</Text>
+        <Text color="gray">ECC Level: {qrDecodeResult.eccLevel}</Text>
+        <Text color="gray">모드 비트: {qrDecodeResult.modeBits || "(없음)"}</Text>
+        <Text color="gray">모드: {qrDecodeResult.mode || "(미확인)"}</Text>
         <Text color="gray">
-          총 글자 수 (Character Count): {formatInfo.characterCount ?? "(미확인)"}
+          총 글자 수 (Character Count): {qrDecodeResult.characterCount ?? "(미확인)"}
         </Text>
-        <Text color="gray">Format Raw Bits: {formatInfo.rawBits || "(없음)"}</Text>
-        <Text color="gray">Format Unmasked Bits: {formatInfo.unmaskedBits || "(없음)"}</Text>
+        <Text color="gray">Format Raw Bits: {qrDecodeResult.rawFormatBits || "(없음)"}</Text>
+        <Text color="gray">
+          Format Unmasked Bits: {qrDecodeResult.unmaskedFormatBits || "(없음)"}
+        </Text>
       </div>
     </div>
   );

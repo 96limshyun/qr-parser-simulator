@@ -1,20 +1,11 @@
-import { useEffect } from "react";
 import { LiaRulerHorizontalSolid, LiaRulerVerticalSolid } from "react-icons/lia";
 
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
-import { detectTimingPositions } from "@/features/decode/utils/createTimingMask";
 import Text from "@/ui/Text";
 
-const TimingDetail = ({ matrix, setFormatInfo }: DetailProps) => {
-  const positions = detectTimingPositions(matrix);
-
-  useEffect(() => {
-    setFormatInfo((prev) => ({
-      ...prev,
-      size: matrix.length,
-    }));
-  }, [matrix.length, setFormatInfo]);
+const TimingDetail = ({ qrDecoder }: DetailProps) => {
+  const positions = qrDecoder.detectTimingPositions();
 
   return (
     <div className="space-y-1 text-sm leading-6">

@@ -2,11 +2,10 @@ import { LiaEyeSolid } from "react-icons/lia";
 
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
-import { detectFinderPositions } from "@/features/decode/utils/createFinderMask";
 import Text from "@/ui/Text";
 
-const FinderDetail = ({ matrix }: DetailProps) => {
-  const pos = detectFinderPositions(matrix);
+const FinderDetail = ({ qrDecoder }: DetailProps) => {
+  const finderPositions = qrDecoder.detectFinderPositions();
 
   const label = (i: number) => ["좌측 상단", "우측 상단", "좌측 하단"][i] ?? `패턴 ${i + 1}`;
 
@@ -28,7 +27,7 @@ const FinderDetail = ({ matrix }: DetailProps) => {
         검출된 위치 패턴:
       </Text>
       <div>
-        {pos.map(({ rowStart, colStart }, i) => (
+        {finderPositions.map(({ rowStart, colStart }, i) => (
           <div
             key={i}
             className="flex items-center gap-2"

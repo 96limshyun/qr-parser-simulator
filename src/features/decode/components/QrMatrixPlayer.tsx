@@ -4,12 +4,12 @@ import { FiPlay } from "react-icons/fi";
 import { RiResetLeftFill } from "react-icons/ri";
 
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
-import type { FormatInfo } from "@/features/decode/types/formatInfo";
 
 import { COLOR_MAP } from "@/constants/colorMap";
 import { SPEED_OPTIONS } from "@/constants/simulationSpeed";
 import useCellAnimation from "@/features/decode/hooks/useCellAnimation";
 import { DECODE_STEPS } from "@/features/decode/step";
+import { QRDecoder } from "@/libs/QRDecoder";
 import Button from "@/ui/Button";
 import Card from "@/ui/Card";
 import Text from "@/ui/Text";
@@ -17,19 +17,19 @@ import Text from "@/ui/Text";
 interface QrMatrixPlayerProps {
   matrix: number[][];
   currentStep: DecodeStep;
-  formatInfo: FormatInfo;
   setCurrentStep: Dispatch<SetStateAction<DecodeStep>>;
   isPlaying: boolean;
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
+  qrDecoder: QRDecoder;
 }
 
 const QrMatrixPlayer = ({
   matrix,
   currentStep,
-  formatInfo,
   setCurrentStep,
   isPlaying,
   setIsPlaying,
+  qrDecoder,
 }: QrMatrixPlayerProps) => {
   const [animationSpeed, setAnimationSpeed] = useState(2000);
   const [isShowBorder, setIsShowBorder] = useState(false);
@@ -40,8 +40,8 @@ const QrMatrixPlayer = ({
   const highlightColor = COLOR_MAP[color!];
 
   const position = useMemo(() => {
-    return maskFn ? maskFn(matrix, formatInfo) : [];
-  }, [maskFn, matrix, formatInfo]);
+    return maskFn ? maskFn(qrDecoder) : [];
+  }, [maskFn, qrDecoder]);
 
   const { filledCells, setFilledCells } = useCellAnimation({ animationSpeed, position, matrix });
 

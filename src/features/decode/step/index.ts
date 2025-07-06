@@ -1,15 +1,10 @@
-import ECCDetail from "../components/details/ECCDetail";
-
 import DataDetail from "@/features/decode/components/details/DataDetail";
+import ECCDetail from "@/features/decode/components/details/ECCDetail";
 import FinderDetail from "@/features/decode/components/details/FinderDetail";
 import FormatDetail from "@/features/decode/components/details/FormatDetail";
 import QrResultDetail from "@/features/decode/components/details/QrResultDetail";
 import TimingDetail from "@/features/decode/components/details/TimingDetail";
-import { createDataMask } from "@/features/decode/utils/createDataMask";
-import { createFinderMask } from "@/features/decode/utils/createFinderMask";
-import { createFormatMask } from "@/features/decode/utils/createFormatMask";
-import { createReadSolomonMask } from "@/features/decode/utils/createReadSolomonMask";
-import { createTimingMask } from "@/features/decode/utils/createTimingMask";
+import { QRDecoder } from "@/libs/QRDecoder";
 
 export const DECODE_STEPS = [
   {
@@ -19,52 +14,56 @@ export const DECODE_STEPS = [
     color: "gray",
     maskFn: undefined,
     stepDetailComponent: undefined,
-    maskFnArgs: [],
   },
   {
     step: "Finder",
     title: "위치 탐지 패턴",
     description: "세 모서리 위치 탐지 패턴을 검출합니다.",
     color: "red",
-    maskFn: createFinderMask,
+    maskFn: (qrDecoder: QRDecoder) => {
+      return qrDecoder.createFinderMask();
+    },
     stepDetailComponent: FinderDetail,
-    maskFnArgs: ["matrix"],
   },
   {
     step: "Timing",
     title: "타이밍 패턴",
     description: "행·열 타이밍 패턴을 검출합니다.",
     color: "blue",
-    maskFn: createTimingMask,
+    maskFn: (qrDecoder: QRDecoder) => {
+      return qrDecoder.createTimingMask();
+    },
     stepDetailComponent: TimingDetail,
-    maskFnArgs: ["matrix"],
   },
   {
     step: "Format",
     title: "포맷 정보",
     description: "에러 정정 레벨 및 마스크 패턴을 해석합니다.",
     color: "green",
-    maskFn: createFormatMask,
+    maskFn: (qrDecoder: QRDecoder) => {
+      return qrDecoder.createFormatMask();
+    },
     stepDetailComponent: FormatDetail,
-    maskFnArgs: ["matrix"],
   },
   {
     step: "Data",
     title: "데이터 모듈",
     description: "데이터 영역 비트를 추출합니다.",
     color: "purple",
-    maskFn: createDataMask,
+    maskFn: (qrDecoder: QRDecoder) => {
+      return qrDecoder.createDataMask();
+    },
     stepDetailComponent: DataDetail,
-    maskFnArgs: ["matrix"],
   },
   {
     step: "ECC",
     title: "오류 정정 코드",
     description: "리드‑솔로몬 오류 정정을 수행합니다.",
     color: "orange",
-    maskFn: createReadSolomonMask,
+    maskFn: (qrDecoder: QRDecoder) => {
+      return qrDecoder.createECCMask();
+    },
     stepDetailComponent: ECCDetail,
-    maskFnArgs: ["matrix", "formatInfo"],
   },
   {
     step: "Decode",

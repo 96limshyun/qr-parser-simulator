@@ -1,25 +1,19 @@
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
-import type { FormatInfo } from "@/features/decode/types/formatInfo";
-import type { Dispatch, SetStateAction } from "react";
+import type { QRDecodeResult } from "@/libs/QRDecoder/types/QRDecodeResult";
 
 import { DECODE_STEPS } from "@/features/decode/step";
+import { QRDecoder } from "@/libs/QRDecoder";
 import Card from "@/ui/Card";
 import Dot from "@/ui/Dot";
 import Text from "@/ui/Text";
 
 interface StepDetailCardProps {
-  matrix: number[][];
   currentStep: DecodeStep;
-  formatInfo: FormatInfo;
-  setFormatInfo: Dispatch<SetStateAction<FormatInfo>>;
+  qrDecoder: QRDecoder;
+  qrDecodeResult: QRDecodeResult;
 }
 
-const StepDetailCard = ({
-  matrix,
-  currentStep,
-  formatInfo,
-  setFormatInfo,
-}: StepDetailCardProps) => {
+const StepDetailCard = ({ currentStep, qrDecoder, qrDecodeResult }: StepDetailCardProps) => {
   const stepConfig = DECODE_STEPS.find((s) => s.step === currentStep);
 
   if (!stepConfig) return null;
@@ -44,10 +38,9 @@ const StepDetailCard = ({
       </div>
       {Detail ?
         <Detail
-          matrix={matrix}
           color={color}
-          formatInfo={formatInfo}
-          setFormatInfo={setFormatInfo}
+          qrDecoder={qrDecoder}
+          qrDecodeResult={qrDecodeResult}
         />
       : <Text color="gray">{description}</Text>}
     </Card>
