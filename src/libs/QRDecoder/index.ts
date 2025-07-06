@@ -490,10 +490,8 @@ export class QRDecoder {
     let characterCount = 0;
     let decodedText = "(없음)";
 
-    // Use corrected data if available
     let dataToDecode = unmaskedDataBits;
     if (eccDetail?.correctionSuccess && eccDetail.correctedDataCodewords) {
-      // Convert corrected codewords back to bits
       const correctedBits = eccDetail.correctedDataCodewords
         .map((codeword) => codeword.toString(2).padStart(8, "0"))
         .join("");

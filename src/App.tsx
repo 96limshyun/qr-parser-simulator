@@ -4,14 +4,12 @@ import type { TabKey } from "@/types/tapKey";
 
 import Decode from "@/features/decode";
 import Encode from "@/features/encode";
-import Recovery from "@/features/recovery";
 import Navigation from "@/ui/Navigation";
 import Text from "@/ui/Text";
 
 const navigationMap = {
   decode: Decode,
   encode: Encode,
-  recovery: Recovery,
 };
 
 const App = () => {

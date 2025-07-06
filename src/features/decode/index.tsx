@@ -16,7 +16,6 @@ const Decode = () => {
 
   const qrDecoder = useMemo(() => new QRDecoder(matrix), [matrix]);
   const decodeResult = useMemo(() => qrDecoder.decode(), [qrDecoder]);
-  console.log(decodeResult);
 
   useEffect(() => {
     setCurrentStep("Init");

@@ -25,7 +25,6 @@ export interface QRDecodeResult {
   eccCorrected: number[];
   eccErrorCount: number;
 
-  // ECC detail fields
   totalDataCodewords?: number;
   totalECCCodewords?: number;
   totalCodewords?: number;
