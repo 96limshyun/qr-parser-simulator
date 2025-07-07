@@ -7,8 +7,10 @@ import type { QREncoderResult } from "./types/QREncoderResult";
 import type { ECLevel } from "@/types/ECCTable";
 import type { Mode, ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
+import { ALIGNMENT_PATTERN_LOCATIONS } from "@/constants/alignmentPattern";
 import { ALPHANUMERIC_TABLE } from "@/constants/alphanumericTable";
 import { ECC_TABLE } from "@/constants/eccTable";
+import { FORMAT_MASK } from "@/constants/formatMask";
 import { VERSION_CAPACITY_TABLE } from "@/constants/versionCapacityTable";
 
 export class QREncoder {
@@ -176,7 +178,6 @@ export class QREncoder {
     if (bitstream.length > totalBits) {
       bitstream = bitstream.slice(0, totalBits);
     }
-
     return bitstream;
   }
 
@@ -195,6 +196,7 @@ export class QREncoder {
     finalBits: string;
   } {
     const bitStream = this.buildBitStream();
+
     const dataCw = this.toCodewords(bitStream);
 
     const version = this.getSmallestVersion();
@@ -231,11 +233,429 @@ export class QREncoder {
     };
   }
 
+  public findFinderPattern(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+
+    const finderPatterns = [
+      { row: 0, col: 0 },
+      { row: 0, col: matrixSize - 7 },
+      { row: matrixSize - 7, col: 0 },
+    ];
+
+    const coordinates: { row: number; col: number }[] = [];
+
+    finderPatterns.forEach((pattern) => {
+      const { row, col } = pattern;
+
+      for (let i = 0; i < 7; i++) {
+        for (let j = 0; j < 7; j++) {
+          const pixelRow = row + i;
+          const pixelCol = col + j;
+
+          if (this.isFinderPatternPixel(i, j)) {
+            coordinates.push({ row: pixelRow, col: pixelCol });
+          }
+        }
+      }
+    });
+
+    return coordinates;
+  }
+
+  private isFinderPatternPixel(row: number, col: number): boolean {
+    const pattern = [
+      [1, 1, 1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 0, 1],
+      [1, 0, 1, 1, 1, 0, 1],
+      [1, 0, 1, 1, 1, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 1, 1, 1, 1],
+    ];
+
+    return pattern[row][col] === 1;
+  }
+
+  public findTimingPattern(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+
+    const coordinates: { row: number; col: number }[] = [];
+
+    for (let col = 8; col < matrixSize - 8; col++) {
+      if ((col - 8) % 2 === 0) {
+        coordinates.push({ row: 6, col });
+      }
+    }
+
+    for (let row = 8; row < matrixSize - 8; row++) {
+      if ((row - 8) % 2 === 0) {
+        coordinates.push({ row, col: 6 });
+      }
+    }
+
+    return coordinates;
+  }
+
+  public findSeparators(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+    const coordinates: { row: number; col: number }[] = [];
+
+    for (let row = 0; row < 8; row++) {
+      coordinates.push({ row, col: 7 });
+    }
+    for (let col = 0; col < 8; col++) {
+      coordinates.push({ row: 7, col });
+    }
+
+    for (let row = 0; row < 8; row++) {
+      coordinates.push({ row, col: matrixSize - 8 });
+    }
+    for (let col = matrixSize - 8; col < matrixSize; col++) {
+      coordinates.push({ row: 7, col });
+    }
+
+    for (let row = matrixSize - 8; row < matrixSize; row++) {
+      coordinates.push({ row, col: 7 });
+    }
+    for (let col = 0; col < 8; col++) {
+      coordinates.push({ row: matrixSize - 8, col });
+    }
+
+    return coordinates;
+  }
+
+  public findDarkModule(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const darkModuleRow = 4 * version + 9;
+
+    return [{ row: darkModuleRow, col: 8 }];
+  }
+
+  public findAlignmentPattern(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+    const coordinates: { row: number; col: number }[] = [];
+
+    if (version < 2) return coordinates;
+
+    const alignmentPositions = this.getAlignmentPositions(version);
+
+    alignmentPositions.forEach(({ row, col }) => {
+      if (!this.isOverlappingFinderPattern(row, col, matrixSize)) {
+        for (let i = -2; i <= 2; i++) {
+          for (let j = -2; j <= 2; j++) {
+            const pixelRow = row + i;
+            const pixelCol = col + j;
+
+            if (pixelRow >= 0 && pixelRow < matrixSize && pixelCol >= 0 && pixelCol < matrixSize) {
+              if (this.isAlignmentPatternPixel(i, j)) {
+                coordinates.push({ row: pixelRow, col: pixelCol });
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return coordinates;
+  }
+
+  private getAlignmentPositions(version: number): { row: number; col: number }[] {
+    const positions: { row: number; col: number }[] = [];
+
+    const alignmentLocations = ALIGNMENT_PATTERN_LOCATIONS[version] || [];
+
+    for (let i = 0; i < alignmentLocations.length; i++) {
+      for (let j = 0; j < alignmentLocations.length; j++) {
+        const row = alignmentLocations[i];
+        const col = alignmentLocations[j];
+
+        if (!this.isOverlappingFinderPattern(row, col, version * 4 + 17)) {
+          positions.push({ row, col });
+        }
+      }
+    }
+
+    return positions;
+  }
+
+  private isOverlappingFinderPattern(row: number, col: number, matrixSize: number): boolean {
+    const finderAreas = [
+      { row: 0, col: 0, width: 7, height: 7 },
+      { row: 0, col: matrixSize - 7, width: 7, height: 7 },
+      { row: matrixSize - 7, col: 0, width: 7, height: 7 },
+    ];
+
+    return finderAreas.some(
+      (area) =>
+        row >= area.row - 2
+        && row <= area.row + area.height + 1
+        && col >= area.col - 2
+        && col <= area.col + area.width + 1,
+    );
+  }
+
+  private isAlignmentPatternPixel(row: number, col: number): boolean {
+    const pattern = [
+      [1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 1],
+      [1, 0, 1, 0, 1],
+      [1, 0, 0, 0, 1],
+      [1, 1, 1, 1, 1],
+    ];
+    return pattern[row + 2][col + 2] === 1;
+  }
+
+  public findFormatInformation(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+    const coordinates: { row: number; col: number }[] = [];
+
+    const ecLevel = this.errorCorrectionLevel.split(" ")[0];
+    const ecLevelBits = this.getErrorCorrectionLevelBits(ecLevel);
+    const maskPattern = "000";
+    const formatBits = ecLevelBits + maskPattern;
+
+    const encodedFormat = this.encodeFormatInformation(formatBits);
+    const maskedFormat = encodedFormat ^ FORMAT_MASK;
+    console.log(maskedFormat.toString(2).padStart(15, "0"));
+    const leftTopPositions = this.getFormatInformationPositions();
+    leftTopPositions.forEach((pos, index) => {
+      if (index < 15 && ((maskedFormat >> (14 - index)) & 1) === 1) {
+        coordinates.push(pos);
+      }
+    });
+
+    const rightBottomPositions = this.getRightBottomFormatPositions(matrixSize);
+    rightBottomPositions.forEach((pos, index) => {
+      if (index < 15 && ((maskedFormat >> (14 - index)) & 1) === 1) {
+        coordinates.push(pos);
+      }
+    });
+
+    return coordinates;
+  }
+
+  private getErrorCorrectionLevelBits(ecLevel: string): string {
+    switch (ecLevel) {
+      case "L":
+        return "01";
+      case "M":
+        return "00";
+      case "Q":
+        return "11";
+      case "H":
+        return "10";
+      default:
+        return "01";
+    }
+  }
+
+  private encodeFormatInformation(formatBits: string): number {
+    const generator = 0b10100110111;
+    let data = parseInt(formatBits.padEnd(15, "0"), 2);
+    for (let i = 0; i < 10; i++) {
+      if ((data >> (14 - i)) & 1) {
+        data ^= generator << (10 - i);
+      }
+    }
+
+    return data & 0x7fff;
+  }
+
+  private getFormatInformationPositions(): { row: number; col: number }[] {
+    const positions: { row: number; col: number }[] = [];
+
+    for (let col = 0; col <= 5; col++) {
+      positions.push({ row: 8, col });
+    }
+    positions.push({ row: 8, col: 7 }, { row: 8, col: 8 });
+    positions.push({ row: 7, col: 8 });
+
+    for (let row = 5; row >= 0; row--) {
+      positions.push({ row, col: 8 });
+    }
+
+    return positions;
+  }
+
+  private getRightBottomFormatPositions(matrixSize: number): { row: number; col: number }[] {
+    const positions: { row: number; col: number }[] = [];
+
+    for (let row = matrixSize - 1; row >= matrixSize - 7; row--) {
+      positions.push({ row, col: 8 });
+    }
+    for (let col = matrixSize - 8; col <= matrixSize - 1; col++) {
+      positions.push({ row: 8, col });
+    }
+
+    return positions;
+  }
+
+  public findDataModules(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+    const coordinates: { row: number; col: number }[] = [];
+    const bitStream = this.buildBitStream();
+    const dataPositions = this.getDataModulePositions(matrixSize);
+
+    const dataBitCount = this.getDataBitCount();
+
+    dataPositions.forEach((pos, index) => {
+      if (index < dataBitCount && index < bitStream.length && bitStream[index] === "1") {
+        coordinates.push({ row: pos.row, col: pos.col });
+      }
+    });
+
+    return coordinates;
+  }
+
+  public findErrorCorrectionModules(): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+    const coordinates: { row: number; col: number }[] = [];
+    const finalBits = this.generateECC().finalBits;
+    const dataPositions = this.getDataModulePositions(matrixSize);
+    const dataBitCount = this.getDataBitCount();
+
+    dataPositions.forEach((pos, index) => {
+      const bitIndex = dataBitCount + index;
+      if (bitIndex < finalBits.length && finalBits[bitIndex] === "1") {
+        coordinates.push({ row: pos.row, col: pos.col });
+      }
+    });
+
+    return coordinates;
+  }
+
+  private getDataBitCount(): number {
+    return this.buildBitStream().length;
+  }
+
+  private getDataModulePositions(matrixSize: number): { row: number; col: number }[] {
+    const positions: { row: number; col: number }[] = [];
+
+    let col = matrixSize - 1;
+    let upwards = true;
+
+    while (col > 0) {
+      if (col === 6) col--;
+
+      const right = col;
+      const left = col - 1;
+
+      if (upwards) {
+        for (let row = matrixSize - 1; row >= 0; row--) {
+          for (const c of [right, left]) {
+            const rowPos = row;
+            const colPos = c;
+
+            if (this.isInFinderPatternArea(rowPos, colPos, matrixSize)) continue;
+            if (rowPos === 6 || colPos === 6) continue;
+            if (this.isInFormatInformationArea(rowPos, colPos, matrixSize)) continue;
+            if (this.isInAlignmentPatternArea(rowPos, colPos)) continue;
+            if (this.isInSeparatorArea(rowPos, colPos, matrixSize)) continue;
+            if (this.isInDarkModuleArea(rowPos, colPos)) continue;
+
+            positions.push({ row: rowPos, col: colPos });
+          }
+        }
+      } else {
+        for (let row = 0; row < matrixSize; row++) {
+          for (const c of [right, left]) {
+            const rowPos = row;
+            const colPos = c;
+
+            if (this.isInFinderPatternArea(rowPos, colPos, matrixSize)) continue;
+            if (rowPos === 6 || colPos === 6) continue;
+            if (this.isInFormatInformationArea(rowPos, colPos, matrixSize)) continue;
+            if (this.isInAlignmentPatternArea(rowPos, colPos)) continue;
+            if (this.isInSeparatorArea(rowPos, colPos, matrixSize)) continue;
+            if (this.isInDarkModuleArea(rowPos, colPos)) continue;
+
+            positions.push({ row: rowPos, col: colPos });
+          }
+        }
+      }
+
+      col -= 2;
+      if (col === 6) col--;
+      upwards = !upwards;
+    }
+    console.log(positions);
+    return positions;
+  }
+
+  private isInFinderPatternArea(row: number, col: number, matrixSize: number): boolean {
+    return this.isOverlappingFinderPattern(row, col, matrixSize);
+  }
+
+  private isInFormatInformationArea(row: number, col: number, matrixSize: number): boolean {
+    if (row === 8 && col < 8) return true;
+    if (row === 8 && col >= matrixSize - 8) return true;
+    if (col === 8 && row < 8) return true;
+    if (col === 8 && row >= matrixSize - 8) return true;
+    return false;
+  }
+
+  private isInAlignmentPatternArea(row: number, col: number): boolean {
+    const alignmentPositions = this.getAlignmentPositions(this.getSmallestVersion());
+
+    return alignmentPositions.some((pos) => {
+      const centerRow = pos.row;
+      const centerCol = pos.col;
+
+      return (
+        row >= centerRow - 2 && row <= centerRow + 2 && col >= centerCol - 2 && col <= centerCol + 2
+      );
+    });
+  }
+
+  private isInSeparatorArea(row: number, col: number, matrixSize: number): boolean {
+    if (col === 7 && row < 8) return true;
+    if (row === 7 && col < 8) return true;
+
+    if (col === matrixSize - 8 && row < 8) return true;
+    if (row === 7 && col >= matrixSize - 8) return true;
+
+    if (col === 7 && row >= matrixSize - 8) return true;
+    if (row === matrixSize - 8 && col < 8) return true;
+
+    return false;
+  }
+
+  private isInDarkModuleArea(row: number, col: number): boolean {
+    const version = this.getSmallestVersion();
+    const darkModuleRow = 4 * version + 9;
+
+    return col === 8 && row === darkModuleRow;
+  }
+
   public encode(): QREncoderResult {
     const smallestVersion = this.getSmallestVersion();
     const bitStream = this.buildBitStream();
     const eccResult = this.generateECC();
+    const finderPattern = this.findFinderPattern();
 
+    const alignmentPattern = this.findAlignmentPattern();
+    const timingPattern = this.findTimingPattern();
+    const darkModule = this.findDarkModule();
+    const formatInformation = this.findFormatInformation();
+    const dataModules = this.findDataModules();
+    const errorCorrectionModules = this.findErrorCorrectionModules();
+
+    const pattern = [
+      ...finderPattern,
+      ...alignmentPattern,
+      ...timingPattern,
+      ...darkModule,
+      ...formatInformation,
+      ...dataModules,
+      ...errorCorrectionModules,
+    ];
     return {
       text: this.text,
       mode: this.mode,
@@ -248,6 +668,7 @@ export class QREncoder {
       eccCodewords: eccResult.eccCodewords,
       finalCodewords: eccResult.finalCodewords,
       finalBits: eccResult.finalBits,
+      pattern,
     };
   }
 }

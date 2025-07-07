@@ -231,4 +231,50 @@ describe("QREncoder", () => {
       expect(result.errorCorrectionLevel).toBe("L (7% 복원)");
     });
   });
+
+  describe("findFinderPattern", () => {
+    it("버전 1 QR 코드의 Finder Pattern 좌표를 반환해야 한다", () => {
+      const encoder = new QREncoder("Hello", "L (7% 복원)");
+      const coordinates = encoder.findFinderPattern();
+
+      expect(coordinates).toBeDefined();
+      expect(Array.isArray(coordinates)).toBe(true);
+      expect(coordinates.length).toBeGreaterThan(0);
+
+      expect(coordinates.length).toBeGreaterThan(0);
+
+      coordinates.forEach((coord) => {
+        expect(coord.row).toBeGreaterThanOrEqual(0);
+        expect(coord.col).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it("버전 2 QR 코드의 Finder Pattern 좌표를 반환해야 한다", () => {
+      const encoder = new QREncoder("Hello World", "L (7% 복원)");
+      const coordinates = encoder.findFinderPattern();
+
+      expect(coordinates).toBeDefined();
+      expect(Array.isArray(coordinates)).toBe(true);
+      expect(coordinates.length).toBeGreaterThan(0);
+
+      expect(coordinates.length).toBeGreaterThan(0);
+
+      coordinates.forEach((coord) => {
+        expect(coord.row).toBeGreaterThanOrEqual(0);
+        expect(coord.col).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it("Finder Pattern 좌표가 올바른 패턴을 따르는지 확인해야 한다", () => {
+      const encoder = new QREncoder("Test", "L (7% 복원)");
+      const coordinates = encoder.findFinderPattern();
+
+      expect(coordinates.length).toBeGreaterThanOrEqual(147);
+
+      coordinates.forEach((coord) => {
+        expect(typeof coord.row).toBe("number");
+        expect(typeof coord.col).toBe("number");
+      });
+    });
+  });
 });

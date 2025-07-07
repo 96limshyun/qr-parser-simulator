@@ -1,35 +1,84 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { CiPause1 } from "react-icons/ci";
 import { FiPlay } from "react-icons/fi";
 import { RiResetLeftFill } from "react-icons/ri";
 
 import type { EncodeStep } from "@/features/encode/types/encodeStep";
+import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
 
 import { SPEED_OPTIONS } from "@/constants/simulationSpeed";
+import { DEFAULT_ENCODE_MATRIX } from "@/features/encode/constants/defaultEncodeMatrix";
+import useCellAnimation from "@/features/encode/hooks/useCellAnimation";
+import { ENCODE_STEPS } from "@/features/encode/step";
 import Button from "@/ui/Button";
 import Card from "@/ui/Card";
 import Text from "@/ui/Text";
+
 interface QrMatrixPlayerProps {
   matrix: number[][];
+  setMatrix: Dispatch<SetStateAction<number[][]>>;
+  currentStep: EncodeStep;
+  setCurrentStep: Dispatch<SetStateAction<EncodeStep>>;
   isPlaying: boolean;
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
-  setCurrentStep: Dispatch<SetStateAction<EncodeStep>>;
+  encodeInfo: QREncoderResult;
 }
+
 const QrMatrixPlayer = ({
   matrix,
+  setMatrix,
+  currentStep,
+  setCurrentStep,
   isPlaying,
   setIsPlaying,
-  setCurrentStep,
+  encodeInfo,
 }: QrMatrixPlayerProps) => {
   const [animationSpeed, setAnimationSpeed] = useState(2000);
   const [isShowBorder, setIsShowBorder] = useState(false);
 
   const handleToggleBorder = () => setIsShowBorder((prev) => !prev);
 
+  const { maskFn } = ENCODE_STEPS.find((s) => s.step === currentStep) ?? {};
+
+  const position = useMemo(() => {
+    return maskFn ? maskFn(encodeInfo) : [];
+  }, [maskFn, encodeInfo]);
+
+  useCellAnimation({
+    animationSpeed,
+    position,
+    matrix,
+    setMatrix,
+  });
+
+  useEffect(() => {
+    if (!isPlaying) {
+      return;
+    }
+
+    let currentIndex = ENCODE_STEPS.findIndex((s) => s.step === currentStep);
+
+    const interval = setInterval(() => {
+      currentIndex += 1;
+
+      if (currentIndex >= ENCODE_STEPS.length) {
+        clearInterval(interval);
+        setIsPlaying(false);
+        return;
+      }
+
+      setCurrentStep(ENCODE_STEPS[currentIndex].step);
+    }, animationSpeed);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, currentStep, setCurrentStep, setIsPlaying, animationSpeed]);
+
   const handleResetClick = () => {
     setCurrentStep("Init");
     setIsPlaying(false);
+    setMatrix(DEFAULT_ENCODE_MATRIX);
   };
+
   return (
     <Card>
       <div className="flex justify-between mb-10">
@@ -76,11 +125,12 @@ const QrMatrixPlayer = ({
               key={rowIndex}
               className="flex"
             >
-              {row.map((_, colIndex) => {
+              {row.map((bit, colIndex) => {
+                const base = bit ? "bg-black" : "bg-white";
                 return (
                   <div
                     key={colIndex}
-                    className={`bg-white w-3 h-3 ${isShowBorder ? "" : "border border-gray-700"} transition-colors duration-150`}
+                    className={`${base} w-3 h-3 ${isShowBorder ? "" : "border border-gray-700"} transition-colors duration-150`}
                   ></div>
                 );
               })}

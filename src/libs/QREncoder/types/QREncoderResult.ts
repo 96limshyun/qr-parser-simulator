@@ -10,4 +10,5 @@ export interface QREncoderResult {
   eccCodewords: number[];
   finalCodewords: number[];
   finalBits: string;
+  pattern: { row: number; col: number }[];
 }
