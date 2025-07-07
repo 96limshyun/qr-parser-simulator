@@ -1,8 +1,10 @@
 import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
 
 import AnalyzeDetail from "@/features/encode/components/details/AnalyzeDetail";
+import BuildMatrixDetail from "@/features/encode/components/details/BuildMatrixDetail";
 import EccDetail from "@/features/encode/components/details/EccDetail";
 import EncodeDataDetail from "@/features/encode/components/details/EncodeDataDetail";
+import MaskDetail from "@/features/encode/components/details/MaskDetail";
 
 export const ENCODE_STEPS = [
   {
@@ -48,15 +50,20 @@ export const ENCODE_STEPS = [
       }
       return [];
     },
-    stepDetailComponent: undefined,
+    stepDetailComponent: BuildMatrixDetail,
   },
   {
     step: "Mask",
     title: "마스킹 적용",
     description: "QR 매트릭스에 최적의 마스크 패턴을 적용합니다.",
     color: "orange",
-    maskFn: undefined,
-    stepDetailComponent: undefined,
+    maskFn: (encodeInfo: QREncoderResult) => {
+      if (encodeInfo.maskedPattern) {
+        return encodeInfo.maskedPattern;
+      }
+      return [];
+    },
+    stepDetailComponent: MaskDetail,
   },
   {
     step: "Finalize",

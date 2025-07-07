@@ -500,30 +500,12 @@ export class QREncoder {
     const matrixSize = version * 4 + 17;
     const coordinates: { row: number; col: number }[] = [];
     const bitStream = this.buildBitStream();
+    const eccResult = this.generateECC();
+    const fullBitStream = bitStream + eccResult.finalBits;
     const dataPositions = this.getDataModulePositions(matrixSize);
 
-    const dataBitCount = this.getDataBitCount();
-
     dataPositions.forEach((pos, index) => {
-      if (index < dataBitCount && index < bitStream.length && bitStream[index] === "1") {
-        coordinates.push({ row: pos.row, col: pos.col });
-      }
-    });
-
-    return coordinates;
-  }
-
-  public findErrorCorrectionModules(): { row: number; col: number }[] {
-    const version = this.getSmallestVersion();
-    const matrixSize = version * 4 + 17;
-    const coordinates: { row: number; col: number }[] = [];
-    const finalBits = this.generateECC().finalBits;
-    const dataPositions = this.getDataModulePositions(matrixSize);
-    const dataBitCount = this.getDataBitCount();
-
-    dataPositions.forEach((pos, index) => {
-      const bitIndex = dataBitCount + index;
-      if (bitIndex < finalBits.length && finalBits[bitIndex] === "1") {
+      if (index < fullBitStream.length && fullBitStream[index] === "1") {
         coordinates.push({ row: pos.row, col: pos.col });
       }
     });
@@ -585,7 +567,7 @@ export class QREncoder {
       if (col === 6) col--;
       upwards = !upwards;
     }
-    console.log(positions);
+
     return positions;
   }
 
@@ -634,6 +616,54 @@ export class QREncoder {
     return col === 8 && row === darkModuleRow;
   }
 
+  private applyMaskPattern0(
+    pattern: { row: number; col: number }[],
+  ): { row: number; col: number }[] {
+    const version = this.getSmallestVersion();
+    const matrixSize = version * 4 + 17;
+    const maskedPattern: { row: number; col: number }[] = [];
+
+    const matrix: boolean[][] = Array(matrixSize)
+      .fill(null)
+      .map(() => Array(matrixSize).fill(false));
+
+    pattern.forEach((pos) => {
+      matrix[pos.row][pos.col] = true;
+    });
+
+    for (let row = 0; row < matrixSize; row++) {
+      for (let col = 0; col < matrixSize; col++) {
+        if (
+          this.isInFinderPatternArea(row, col, matrixSize)
+          || this.isInFormatInformationArea(row, col, matrixSize)
+          || this.isInAlignmentPatternArea(row, col)
+          || this.isInSeparatorArea(row, col, matrixSize)
+          || this.isInDarkModuleArea(row, col)
+          || row === 6
+          || col === 6
+        ) {
+          continue;
+        }
+
+        const shouldFlip = (row + col) % 2 === 0;
+
+        if (shouldFlip) {
+          matrix[row][col] = !matrix[row][col];
+        }
+      }
+    }
+
+    for (let row = 0; row < matrixSize; row++) {
+      for (let col = 0; col < matrixSize; col++) {
+        if (matrix[row][col]) {
+          maskedPattern.push({ row, col });
+        }
+      }
+    }
+
+    return maskedPattern;
+  }
+
   public encode(): QREncoderResult {
     const smallestVersion = this.getSmallestVersion();
     const bitStream = this.buildBitStream();
@@ -645,7 +675,6 @@ export class QREncoder {
     const darkModule = this.findDarkModule();
     const formatInformation = this.findFormatInformation();
     const dataModules = this.findDataModules();
-    const errorCorrectionModules = this.findErrorCorrectionModules();
 
     const pattern = [
       ...finderPattern,
@@ -654,8 +683,10 @@ export class QREncoder {
       ...darkModule,
       ...formatInformation,
       ...dataModules,
-      ...errorCorrectionModules,
     ];
+
+    const maskedPattern = this.applyMaskPattern0(pattern);
+
     return {
       text: this.text,
       mode: this.mode,
@@ -669,6 +700,7 @@ export class QREncoder {
       finalCodewords: eccResult.finalCodewords,
       finalBits: eccResult.finalBits,
       pattern,
+      maskedPattern,
     };
   }
 }

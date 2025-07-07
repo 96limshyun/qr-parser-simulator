@@ -11,4 +11,5 @@ export interface QREncoderResult {
   finalCodewords: number[];
   finalBits: string;
   pattern: { row: number; col: number }[];
+  maskedPattern: { row: number; col: number }[];
 }
