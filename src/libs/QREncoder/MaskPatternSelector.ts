@@ -1,3 +1,5 @@
+import { DATA_MASK_PATTERNS } from "@/constants/maskPatterns";
+
 export class MaskPatternSelector {
   private matrixSize: number;
 
@@ -69,26 +71,7 @@ export class MaskPatternSelector {
    * @returns 마스크를 적용할지 여부
    */
   private getMaskCondition(row: number, col: number, maskNumber: number): boolean {
-    switch (maskNumber) {
-      case 0:
-        return (row + col) % 2 === 0;
-      case 1:
-        return row % 2 === 0;
-      case 2:
-        return col % 3 === 0;
-      case 3:
-        return (row + col) % 3 === 0;
-      case 4:
-        return (Math.floor(row / 2) + Math.floor(col / 3)) % 2 === 0;
-      case 5:
-        return ((row * col) % 2) + ((row * col) % 3) === 0;
-      case 6:
-        return (((row * col) % 2) + ((row * col) % 3)) % 2 === 0;
-      case 7:
-        return (((row + col) % 2) + ((row * col) % 3)) % 2 === 0;
-      default:
-        return false;
-    }
+    return DATA_MASK_PATTERNS[maskNumber](row, col);
   }
 
   /**

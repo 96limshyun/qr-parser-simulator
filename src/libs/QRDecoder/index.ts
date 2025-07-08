@@ -10,6 +10,7 @@ import { CHARACTER_COUNT_BITS_MAP } from "@/constants/characterCountBitsMap";
 import { ECC_TABLE } from "@/constants/eccTable";
 import { FINDER_PATTERN } from "@/constants/finderPattern";
 import { FORMAT_INFORMATION_STRINGS } from "@/constants/formatMask";
+import { DATA_MASK_PATTERNS } from "@/constants/maskPatterns";
 import { MODE_MAP } from "@/constants/modeMap";
 
 export class QRDecoder {
@@ -485,23 +486,10 @@ export class QRDecoder {
     if (!fullBits) {
       const dataPositions = this.getDataModuleCoordinates();
       const { maskPattern } = this.decodeFormatInfo();
-      const DATA_MASKS = [
-        (p: { row: number; col: number }) => (p.row + p.col) % 2 === 0,
-        (p: { row: number; col: number }) => p.row % 2 === 0,
-        (p: { row: number; col: number }) => p.col % 3 === 0,
-        (p: { row: number; col: number }) => (p.row + p.col) % 3 === 0,
-        (p: { row: number; col: number }) =>
-          (Math.floor(p.row / 2) + Math.floor(p.col / 3)) % 2 === 0,
-        (p: { row: number; col: number }) => ((p.col * p.row) % 2) + ((p.col * p.row) % 3) === 0,
-        (p: { row: number; col: number }) =>
-          (((p.row * p.col) % 2) + ((p.row * p.col) % 3)) % 2 === 0,
-        (p: { row: number; col: number }) =>
-          (((p.row + p.col) % 2) + ((p.row * p.col) % 3)) % 2 === 0,
-      ];
-      const dataMask = DATA_MASKS[maskPattern];
+      const dataMask = DATA_MASK_PATTERNS[maskPattern];
       fullBits = dataPositions
         .map(({ row, col }) =>
-          dataMask({ row, col }) ? this.matrix[row][col] ^ 1 : this.matrix[row][col],
+          dataMask(row, col) ? this.matrix[row][col] ^ 1 : this.matrix[row][col],
         )
         .join("");
     }
@@ -569,25 +557,11 @@ export class QRDecoder {
     const dataPositions = this.getDataModuleCoordinates();
     const maskedDataBits = dataPositions.map(({ row, col }) => this.matrix[row][col]).join("");
 
-    const DATA_MASKS = [
-      (p: { row: number; col: number }) => (p.row + p.col) % 2 === 0,
-      (p: { row: number; col: number }) => p.row % 2 === 0,
-      (p: { row: number; col: number }) => p.col % 3 === 0,
-      (p: { row: number; col: number }) => (p.row + p.col) % 3 === 0,
-      (p: { row: number; col: number }) =>
-        (Math.floor(p.row / 2) + Math.floor(p.col / 3)) % 2 === 0,
-      (p: { row: number; col: number }) => ((p.col * p.row) % 2) + ((p.col * p.row) % 3) === 0,
-      (p: { row: number; col: number }) =>
-        (((p.row * p.col) % 2) + ((p.row * p.col) % 3)) % 2 === 0,
-      (p: { row: number; col: number }) =>
-        (((p.row + p.col) % 2) + ((p.row * p.col) % 3)) % 2 === 0,
-    ];
-
-    const dataMask = DATA_MASKS[maskPattern];
+    const dataMask = DATA_MASK_PATTERNS[maskPattern];
     const unmaskedDataBits = dataPositions
       .map(({ row, col }) => {
         const originalValue = this.matrix[row][col];
-        const shouldMask = dataMask({ row, col });
+        const shouldMask = dataMask(row, col);
         const maskedValue = shouldMask ? originalValue ^ 1 : originalValue;
         return maskedValue;
       })
