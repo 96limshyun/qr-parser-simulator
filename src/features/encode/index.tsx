@@ -26,7 +26,6 @@ const Encode = () => {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
   };
-
   useEffect(() => {
     const { smallestVersion } = encoder.encode();
     setMatrix(

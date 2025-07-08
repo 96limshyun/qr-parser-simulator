@@ -2,23 +2,25 @@ import GenericGF from "@zxing/library/esm/core/common/reedsolomon/GenericGF";
 import ReedSolomonEncoder from "@zxing/library/esm/core/common/reedsolomon/ReedSolomonEncoder";
 
 import { MODE_DETECTION_RULES } from "./constants/modeDetectionRules";
+import { QREncodingStrategy } from "./QREncodingStrategy";
 
 import type { QREncoderResult } from "./types/QREncoderResult";
 import type { ECLevel } from "@/types/ECCTable";
 import type { Mode, ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
 import { ALIGNMENT_PATTERN_LOCATIONS } from "@/constants/alignmentPattern";
-import { ALPHANUMERIC_TABLE } from "@/constants/alphanumericTable";
 import { ECC_TABLE } from "@/constants/eccTable";
+import { FINDER_PATTERN } from "@/constants/finderPattern";
 import { FORMAT_MASK } from "@/constants/formatMask";
 import { VERSION_CAPACITY_TABLE } from "@/constants/versionCapacityTable";
-
 export class QREncoder {
   private text: string;
   private mode: string;
   private modeIndicatorBits: string;
   private length: number;
   private errorCorrectionLevel: string;
+  private smallestVersion: number;
+  private qrEncodingStrategy: QREncodingStrategy;
 
   constructor(text: string, errorCorrectionLevel: string) {
     this.text = text;
@@ -26,8 +28,15 @@ export class QREncoder {
     this.modeIndicatorBits = this.getMode(this.text).modeIndicatorBits;
     this.length = this.text.length;
     this.errorCorrectionLevel = errorCorrectionLevel;
+    this.smallestVersion = this.getSmallestVersion();
+    this.qrEncodingStrategy = new QREncodingStrategy();
   }
 
+  /**
+   * 모드 검출 규칙(MODE_DETECTION_RULES)에 따라 모드와 모드 인디케이터 비트를 반환합니다.
+   * @param text - 인코딩할 텍스트
+   * @returns 모드와 모드 인디케이터 비트
+   */
   public getMode(text: string): { mode: string; modeIndicatorBits: string } {
     const foundMode = MODE_DETECTION_RULES.find(({ regex }) => regex.test(text));
     const mode = foundMode ? foundMode.mode : "Byte";
@@ -36,6 +45,11 @@ export class QREncoder {
     return { mode, modeIndicatorBits };
   }
 
+  /**
+   * 최소 버전을 반환합니다.
+   * 버전 용량 테이블(VERSION_CAPACITY_TABLE)에 따라 최소 버전을 반환합니다.
+   * @returns 최소 버전
+   */
   public getSmallestVersion(): number {
     const ecLevel = this.errorCorrectionLevel.split(" ")[0] as ErrorCorrectionLevel;
 
@@ -48,112 +62,57 @@ export class QREncoder {
     return 1;
   }
 
+  /**
+   * 문자 수 비트 길이를 반환합니다.
+   * @param version - 버전(1~40)
+   * @param mode - 모드(Numeric, Alphanumeric, Byte, Kanji)
+   * @param data - 인코딩할 텍스트
+   * @returns 문자 수 비트(문자 수 비트 길이)
+   */
   private getCharCountBitLength(version: number, mode: Mode, data: string): string {
-    let charCountBitLength = 0;
-
-    if (version <= 9) {
-      if (mode === "Numeric") charCountBitLength = 10;
-      if (mode === "Alphanumeric") charCountBitLength = 9;
-      if (mode === "Byte") charCountBitLength = 8;
-      if (mode === "Kanji") charCountBitLength = 8;
-    } else if (version <= 26) {
-      if (mode === "Numeric") charCountBitLength = 12;
-      if (mode === "Alphanumeric") charCountBitLength = 11;
-      if (mode === "Byte") charCountBitLength = 16;
-      if (mode === "Kanji") charCountBitLength = 10;
-    } else {
-      if (mode === "Numeric") charCountBitLength = 14;
-      if (mode === "Alphanumeric") charCountBitLength = 13;
-      if (mode === "Byte") charCountBitLength = 16;
-      if (mode === "Kanji") charCountBitLength = 12;
-    }
-
+    const charCountBitsTable: Record<Mode, [number, number, number]> = {
+      Numeric: [10, 12, 14],
+      Alphanumeric: [9, 11, 13],
+      Byte: [8, 16, 16],
+      Kanji: [8, 10, 12],
+    };
+    const idx =
+      version <= 9 ? 0
+      : version <= 26 ? 1
+      : 2;
+    const charCountBitLength = charCountBitsTable[mode]?.[idx] ?? 0;
     return data.length.toString(2).padStart(charCountBitLength, "0");
   }
 
-  private encodeAlphanumeric(data: string): string {
-    let bits = "";
-
-    for (let i = 0; i < data.length; i += 2) {
-      if (i + 1 < data.length) {
-        const first = ALPHANUMERIC_TABLE.indexOf(data[i]);
-        const second = ALPHANUMERIC_TABLE.indexOf(data[i + 1]);
-        const value = 45 * first + second;
-        bits += value.toString(2).padStart(11, "0");
-      } else {
-        const first = ALPHANUMERIC_TABLE.indexOf(data[i]);
-        bits += first.toString(2).padStart(6, "0");
-      }
-    }
-
-    return bits;
-  }
-
-  private encodeNumeric(data: string): string {
-    let bits = "";
-    let i = 0;
-
-    while (i < data.length) {
-      if (i + 3 <= data.length) {
-        const chunk = data.substr(i, 3);
-        bits += parseInt(chunk, 10).toString(2).padStart(10, "0");
-        i += 3;
-      } else if (i + 2 <= data.length) {
-        const chunk = data.substr(i, 2);
-        bits += parseInt(chunk, 10).toString(2).padStart(7, "0");
-        i += 2;
-      } else {
-        const chunk = data.substr(i, 1);
-        bits += parseInt(chunk, 10).toString(2).padStart(4, "0");
-        i += 1;
-      }
-    }
-
-    return bits;
-  }
-
-  private encodeByte(data: string): string {
-    let bits = "";
-
-    const encoder = new TextEncoder();
-    const encoded = encoder.encode(data);
-
-    for (let i = 0; i < encoded.length; i++) {
-      bits += encoded[i].toString(2).padStart(8, "0");
-    }
-
-    return bits;
-  }
-
+  /**
+   * 버전과 에러레벨에 맞는 총 비트 수를 반환합니다.
+   * @param version - 버전(1~40)
+   * @param ecLevel - 에러레벨(L, M, Q, H)
+   * @returns 총 비트 수
+   */
   private getTotalBits(version: number, ecLevel: ECLevel): number {
     const eccInfo = ECC_TABLE[version]?.[ecLevel];
-    if (!eccInfo) {
-      throw new Error(`ECC info not found for version ${version} / level ${ecLevel}`);
-    }
     return eccInfo.totalDataCodewords * 8;
   }
 
+  /**
+   * 비트 스트림을 생성합니다.
+   * 비트스트림은 모드 인디케이터 비트, 문자 수 비트, 데이터 비트로 구성됩니다.
+   * 데이터 비트는 선택된 모드에 따라 인코딩됩니다.
+   * 데이터 비트 뒤에는 종료 비트(0000)가 추가됩니다.
+   * 데이터 비트 뒤에는 패딩 비트(11101100)가 추가됩니다.
+   * 패딩 비트 뒤에는 종료 비트(00010001)가 추가됩니다.
+   * @returns 비트 스트림
+   */
   public buildBitStream(): string {
-    const version = this.getSmallestVersion();
     const ecLevel = this.errorCorrectionLevel.split(" ")[0] as ECLevel;
 
     let bitstream =
-      this.modeIndicatorBits + this.getCharCountBitLength(version, this.mode as Mode, this.text);
+      this.modeIndicatorBits
+      + this.getCharCountBitLength(this.smallestVersion, this.mode as Mode, this.text)
+      + this.qrEncodingStrategy.encodeUsingSelectedMode(this.text, this.mode as Mode);
 
-    let dataBits = "";
-    if (this.mode === "Alphanumeric") {
-      dataBits = this.encodeAlphanumeric(this.text);
-    } else if (this.mode === "Numeric") {
-      dataBits = this.encodeNumeric(this.text);
-    } else if (this.mode === "Byte") {
-      dataBits = this.encodeByte(this.text);
-    } else {
-      throw new Error(`Mode ${this.mode} not implemented yet.`);
-    }
-
-    bitstream += dataBits;
-
-    const totalBits = this.getTotalBits(version, ecLevel);
+    const totalBits = this.getTotalBits(this.smallestVersion, ecLevel);
     const remaining = totalBits - bitstream.length;
     const terminatorLength = Math.min(4, remaining);
     bitstream += "0".repeat(terminatorLength);
@@ -181,6 +140,12 @@ export class QREncoder {
     return bitstream;
   }
 
+  /**
+   * 비트 스트림을 코드워드로 변환합니다.
+   * 코드워드란 8비트로 구성된 데이터 비트 묶음입니다.
+   * @param bits - 비트 스트림
+   * @returns 코드워드
+   */
   private toCodewords(bits: string): number[] {
     const out: number[] = [];
     for (let i = 0; i + 8 <= bits.length; i += 8) {
@@ -189,31 +154,24 @@ export class QREncoder {
     return out;
   }
 
-  public generateECC(): {
+  /**
+   * 에러 정정 비트를 생성합니다.
+   * @returns 에러 정정 비트
+   */
+  public generateECC(bitStream: string): {
     dataCodewords: number[];
     eccCodewords: number[];
     finalCodewords: number[];
     finalBits: string;
   } {
-    const bitStream = this.buildBitStream();
-
     const dataCw = this.toCodewords(bitStream);
 
-    const version = this.getSmallestVersion();
+    const version = this.smallestVersion;
     const ecLevel = this.errorCorrectionLevel.split(" ")[0] as ECLevel;
     const eccInfo = ECC_TABLE[version][ecLevel];
 
     const shardLen = eccInfo.dataCodewordsGroup1;
     const eccLen = eccInfo.ecCodewordsPerBlock;
-
-    if (!dataCw.length) {
-      return {
-        dataCodewords: [],
-        eccCodewords: [],
-        finalCodewords: [],
-        finalBits: "",
-      };
-    }
 
     const encoder = new ReedSolomonEncoder(GenericGF.QR_CODE_FIELD_256);
     const buffer = new Int32Array(shardLen + eccLen);
@@ -234,7 +192,7 @@ export class QREncoder {
   }
 
   public findFinderPattern(): { row: number; col: number }[] {
-    const version = this.getSmallestVersion();
+    const version = this.smallestVersion;
     const matrixSize = version * 4 + 17;
 
     const finderPatterns = [
@@ -253,7 +211,7 @@ export class QREncoder {
           const pixelRow = row + i;
           const pixelCol = col + j;
 
-          if (this.isFinderPatternPixel(i, j)) {
+          if (FINDER_PATTERN[i][j] === 1) {
             coordinates.push({ row: pixelRow, col: pixelCol });
           }
         }
@@ -261,20 +219,6 @@ export class QREncoder {
     });
 
     return coordinates;
-  }
-
-  private isFinderPatternPixel(row: number, col: number): boolean {
-    const pattern = [
-      [1, 1, 1, 1, 1, 1, 1],
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 0, 1, 1, 1, 0, 1],
-      [1, 0, 1, 1, 1, 0, 1],
-      [1, 0, 1, 1, 1, 0, 1],
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 1, 1, 1, 1, 1, 1],
-    ];
-
-    return pattern[row][col] === 1;
   }
 
   public findTimingPattern(): { row: number; col: number }[] {
@@ -421,7 +365,7 @@ export class QREncoder {
 
     const encodedFormat = this.encodeFormatInformation(formatBits);
     const maskedFormat = encodedFormat ^ FORMAT_MASK;
-    console.log(maskedFormat.toString(2).padStart(15, "0"));
+
     const leftTopPositions = this.getFormatInformationPositions();
     leftTopPositions.forEach((pos, index) => {
       if (index < 15 && ((maskedFormat >> (14 - index)) & 1) === 1) {
@@ -500,7 +444,7 @@ export class QREncoder {
     const matrixSize = version * 4 + 17;
     const coordinates: { row: number; col: number }[] = [];
     const bitStream = this.buildBitStream();
-    const eccResult = this.generateECC();
+    const eccResult = this.generateECC(bitStream);
     const fullBitStream = bitStream + eccResult.finalBits;
     const dataPositions = this.getDataModulePositions(matrixSize);
 
@@ -511,10 +455,6 @@ export class QREncoder {
     });
 
     return coordinates;
-  }
-
-  private getDataBitCount(): number {
-    return this.buildBitStream().length;
   }
 
   private getDataModulePositions(matrixSize: number): { row: number; col: number }[] {
@@ -616,7 +556,7 @@ export class QREncoder {
     return col === 8 && row === darkModuleRow;
   }
 
-  private applyMaskPattern0(
+  private applyMaskPattern(
     pattern: { row: number; col: number }[],
   ): { row: number; col: number }[] {
     const version = this.getSmallestVersion();
@@ -665,11 +605,10 @@ export class QREncoder {
   }
 
   public encode(): QREncoderResult {
-    const smallestVersion = this.getSmallestVersion();
     const bitStream = this.buildBitStream();
-    const eccResult = this.generateECC();
-    const finderPattern = this.findFinderPattern();
+    const eccResult = this.generateECC(bitStream);
 
+    const finderPattern = this.findFinderPattern();
     const alignmentPattern = this.findAlignmentPattern();
     const timingPattern = this.findTimingPattern();
     const darkModule = this.findDarkModule();
@@ -685,7 +624,7 @@ export class QREncoder {
       ...dataModules,
     ];
 
-    const maskedPattern = this.applyMaskPattern0(pattern);
+    const maskedPattern = this.applyMaskPattern(pattern);
 
     return {
       text: this.text,
@@ -694,7 +633,7 @@ export class QREncoder {
       length: this.length,
       errorCorrectionLevel: this.errorCorrectionLevel,
       bitStream,
-      smallestVersion,
+      smallestVersion: this.smallestVersion,
       dataCodewords: eccResult.dataCodewords,
       eccCodewords: eccResult.eccCodewords,
       finalCodewords: eccResult.finalCodewords,
