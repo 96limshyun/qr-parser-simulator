@@ -45,8 +45,8 @@ export const ENCODE_STEPS = [
     description: "패턴과 데이터를 배치하여 최종 QR 매트릭스를 생성합니다.",
     color: "purple",
     maskFn: (encodeInfo: QREncoderResult) => {
-      if (encodeInfo.pattern) {
-        return encodeInfo.pattern;
+      if (encodeInfo.basePattern) {
+        return encodeInfo.basePattern;
       }
       return [];
     },
@@ -58,8 +58,8 @@ export const ENCODE_STEPS = [
     description: "QR 매트릭스에 최적의 마스크 패턴을 적용합니다.",
     color: "orange",
     maskFn: (encodeInfo: QREncoderResult) => {
-      if (encodeInfo.maskedPattern) {
-        return encodeInfo.maskedPattern;
+      if (encodeInfo.maskedMatrixPositions) {
+        return encodeInfo.maskedMatrixPositions;
       }
       return [];
     },
@@ -67,10 +67,15 @@ export const ENCODE_STEPS = [
   },
   {
     step: "Finalize",
-    title: "최종 QR 코드",
-    description: "QR 코드 이미지를 렌더링합니다.",
+    title: "format 생성 및 최종 QR 코드",
+    description: "format 패턴을 적용하고 QR 코드 이미지를 렌더링합니다.",
     color: "emerald",
-    maskFn: undefined,
+    maskFn: (encodeInfo: QREncoderResult) => {
+      if (encodeInfo.formatPosition) {
+        return encodeInfo.formatPosition;
+      }
+      return [];
+    },
     stepDetailComponent: undefined,
   },
 ] as const;

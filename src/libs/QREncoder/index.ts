@@ -2,6 +2,7 @@ import GenericGF from "@zxing/library/esm/core/common/reedsolomon/GenericGF";
 import ReedSolomonEncoder from "@zxing/library/esm/core/common/reedsolomon/ReedSolomonEncoder";
 
 import { MODE_DETECTION_RULES } from "./constants/modeDetectionRules";
+import { MaskPatternSelector } from "./MaskPatternSelector";
 import { QREncodingStrategy } from "./QREncodingStrategy";
 
 import type { QREncoderResult } from "./types/QREncoderResult";
@@ -11,7 +12,7 @@ import type { Mode, ErrorCorrectionLevel } from "@/types/versionCapacityTableTyp
 import { ALIGNMENT_PATTERN_LOCATIONS } from "@/constants/alignmentPattern";
 import { ECC_TABLE } from "@/constants/eccTable";
 import { FINDER_PATTERN } from "@/constants/finderPattern";
-import { FORMAT_MASK } from "@/constants/formatMask";
+import { FORMAT_INFORMATION_STRINGS } from "@/constants/formatMask";
 import { VERSION_CAPACITY_TABLE } from "@/constants/versionCapacityTable";
 export class QREncoder {
   private text: string;
@@ -354,28 +355,31 @@ export class QREncoder {
   }
 
   public findFormatInformation(): { row: number; col: number }[] {
+    return this.findFormatInformationWithMask(0); // 기본값으로 마스크 0 사용
+  }
+
+  public findFormatInformationWithMask(maskNumber: number): { row: number; col: number }[] {
     const version = this.getSmallestVersion();
     const matrixSize = version * 4 + 17;
     const coordinates: { row: number; col: number }[] = [];
 
     const ecLevel = this.errorCorrectionLevel.split(" ")[0];
-    const ecLevelBits = this.getErrorCorrectionLevelBits(ecLevel);
-    const maskPattern = "000";
-    const formatBits = ecLevelBits + maskPattern;
 
-    const encodedFormat = this.encodeFormatInformation(formatBits);
-    const maskedFormat = encodedFormat ^ FORMAT_MASK;
+    const formatInformation =
+      FORMAT_INFORMATION_STRINGS[ecLevel as keyof typeof FORMAT_INFORMATION_STRINGS][
+        maskNumber as keyof (typeof FORMAT_INFORMATION_STRINGS)[keyof typeof FORMAT_INFORMATION_STRINGS]
+      ];
 
     const leftTopPositions = this.getFormatInformationPositions();
     leftTopPositions.forEach((pos, index) => {
-      if (index < 15 && ((maskedFormat >> (14 - index)) & 1) === 1) {
+      if (index < 15 && ((formatInformation >> (14 - index)) & 1) === 1) {
         coordinates.push(pos);
       }
     });
 
     const rightBottomPositions = this.getRightBottomFormatPositions(matrixSize);
     rightBottomPositions.forEach((pos, index) => {
-      if (index < 15 && ((maskedFormat >> (14 - index)) & 1) === 1) {
+      if (index < 15 && ((formatInformation >> (14 - index)) & 1) === 1) {
         coordinates.push(pos);
       }
     });
@@ -556,54 +560,6 @@ export class QREncoder {
     return col === 8 && row === darkModuleRow;
   }
 
-  private applyMaskPattern(
-    pattern: { row: number; col: number }[],
-  ): { row: number; col: number }[] {
-    const version = this.getSmallestVersion();
-    const matrixSize = version * 4 + 17;
-    const maskedPattern: { row: number; col: number }[] = [];
-
-    const matrix: boolean[][] = Array(matrixSize)
-      .fill(null)
-      .map(() => Array(matrixSize).fill(false));
-
-    pattern.forEach((pos) => {
-      matrix[pos.row][pos.col] = true;
-    });
-
-    for (let row = 0; row < matrixSize; row++) {
-      for (let col = 0; col < matrixSize; col++) {
-        if (
-          this.isInFinderPatternArea(row, col, matrixSize)
-          || this.isInFormatInformationArea(row, col, matrixSize)
-          || this.isInAlignmentPatternArea(row, col)
-          || this.isInSeparatorArea(row, col, matrixSize)
-          || this.isInDarkModuleArea(row, col)
-          || row === 6
-          || col === 6
-        ) {
-          continue;
-        }
-
-        const shouldFlip = (row + col) % 2 === 0;
-
-        if (shouldFlip) {
-          matrix[row][col] = !matrix[row][col];
-        }
-      }
-    }
-
-    for (let row = 0; row < matrixSize; row++) {
-      for (let col = 0; col < matrixSize; col++) {
-        if (matrix[row][col]) {
-          maskedPattern.push({ row, col });
-        }
-      }
-    }
-
-    return maskedPattern;
-  }
-
   public encode(): QREncoderResult {
     const bitStream = this.buildBitStream();
     const eccResult = this.generateECC(bitStream);
@@ -612,19 +568,31 @@ export class QREncoder {
     const alignmentPattern = this.findAlignmentPattern();
     const timingPattern = this.findTimingPattern();
     const darkModule = this.findDarkModule();
-    const formatInformation = this.findFormatInformation();
     const dataModules = this.findDataModules();
 
-    const pattern = [
+    const basePattern = [
       ...finderPattern,
       ...alignmentPattern,
       ...timingPattern,
       ...darkModule,
-      ...formatInformation,
       ...dataModules,
     ];
 
-    const maskedPattern = this.applyMaskPattern(pattern);
+    const matrixSize = this.smallestVersion * 4 + 17;
+    const dataEccPositions = this.getDataModulePositions(matrixSize);
+    const maskSelector = new MaskPatternSelector(matrixSize);
+    const { maskedMatrix, maskNumber } = maskSelector.findBestMaskPattern(
+      dataEccPositions,
+      basePattern,
+    );
+
+    const maskedMatrixPositions = maskedMatrix
+      .map((row, rowIndex) =>
+        row.map((value, colIndex) => ({ row: rowIndex, col: colIndex, value: value ? 1 : 0 })),
+      )
+      .flat();
+
+    const formatPosition = this.findFormatInformationWithMask(maskNumber);
 
     return {
       text: this.text,
@@ -638,8 +606,10 @@ export class QREncoder {
       eccCodewords: eccResult.eccCodewords,
       finalCodewords: eccResult.finalCodewords,
       finalBits: eccResult.finalBits,
-      pattern,
-      maskedPattern,
+      basePattern,
+      maskedMatrixPositions,
+      maskNumber,
+      formatPosition,
     };
   }
 }

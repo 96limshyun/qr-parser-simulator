@@ -50,7 +50,7 @@ const MASK_PATTERNS = [
 ];
 
 const MaskDetail = ({ encodeInfo }: MaskDetailProps) => {
-  const maskPatternIdx = 0;
+  const maskPatternIdx = encodeInfo.maskNumber;
   const maskPattern = MASK_PATTERNS[maskPatternIdx];
 
   return (
@@ -80,13 +80,15 @@ const MaskDetail = ({ encodeInfo }: MaskDetailProps) => {
         <div>
           <Text fontWeight="medium">마스킹 전</Text>
           <div className="border p-2 rounded text-xs">
-            {encodeInfo.pattern ? `활성 모듈 수: ${encodeInfo.pattern.length}` : "-"}
+            {encodeInfo.basePattern ? `활성 모듈 수: ${encodeInfo.basePattern.length}` : "-"}
           </div>
         </div>
         <div>
           <Text fontWeight="medium">마스킹 후</Text>
           <div className="border p-2 rounded text-xs">
-            {encodeInfo.maskedPattern ? `활성 모듈 수: ${encodeInfo.maskedPattern.length}` : "-"}
+            {encodeInfo.maskedMatrixPositions ?
+              `활성 모듈 수: ${encodeInfo.maskedMatrixPositions.length}`
+            : "-"}
           </div>
         </div>
       </div>

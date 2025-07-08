@@ -10,6 +10,8 @@ export interface QREncoderResult {
   eccCodewords: number[];
   finalCodewords: number[];
   finalBits: string;
-  pattern: { row: number; col: number }[];
-  maskedPattern: { row: number; col: number }[];
+  basePattern: { row: number; col: number }[];
+  maskedMatrixPositions: { row: number; col: number; value: number }[];
+  maskNumber: number;
+  formatPosition: { row: number; col: number }[];
 }

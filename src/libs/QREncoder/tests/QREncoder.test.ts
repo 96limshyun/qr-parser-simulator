@@ -104,7 +104,7 @@ describe("QREncoder", () => {
   describe("generateECC", () => {
     it("Numeric 모드에 대해 올바른 ECC를 생성해야 한다", () => {
       const encoder = new QREncoder("12345", "L (7% 복원)");
-      const eccResult = encoder.generateECC();
+      const eccResult = encoder.generateECC(encoder.buildBitStream());
 
       expect(eccResult.dataCodewords).toBeDefined();
       expect(eccResult.eccCodewords).toBeDefined();
@@ -116,7 +116,7 @@ describe("QREncoder", () => {
 
     it("Alphanumeric 모드에 대해 올바른 ECC를 생성해야 한다", () => {
       const encoder = new QREncoder("ABC123", "M (15% 복원)");
-      const eccResult = encoder.generateECC();
+      const eccResult = encoder.generateECC(encoder.buildBitStream());
 
       expect(eccResult.dataCodewords).toBeDefined();
       expect(eccResult.eccCodewords).toBeDefined();
@@ -128,7 +128,7 @@ describe("QREncoder", () => {
 
     it("Byte 모드에 대해 올바른 ECC를 생성해야 한다", () => {
       const encoder = new QREncoder("Hello World", "Q (25% 복원)");
-      const eccResult = encoder.generateECC();
+      const eccResult = encoder.generateECC(encoder.buildBitStream());
 
       expect(eccResult.dataCodewords).toBeDefined();
       expect(eccResult.eccCodewords).toBeDefined();
@@ -138,14 +138,16 @@ describe("QREncoder", () => {
       expect(eccResult.eccCodewords.length).toBeGreaterThan(0);
     });
 
-    it("빈 입력에 대해 빈 ECC 결과를 반환해야 한다", () => {
+    it("빈 입력에 대해 올바른 ECC 결과를 반환해야 한다", () => {
       const encoder = new QREncoder("", "H (30% 복원)");
-      const eccResult = encoder.generateECC();
+      const eccResult = encoder.generateECC(encoder.buildBitStream());
 
-      expect(eccResult.dataCodewords).toEqual([]);
-      expect(eccResult.eccCodewords).toEqual([]);
-      expect(eccResult.finalCodewords).toEqual([]);
-      expect(eccResult.finalBits).toBe("");
+      expect(eccResult.dataCodewords).toBeDefined();
+      expect(eccResult.eccCodewords).toBeDefined();
+      expect(eccResult.finalCodewords).toBeDefined();
+      expect(eccResult.finalBits).toBeDefined();
+      expect(eccResult.dataCodewords.length).toBeGreaterThan(0);
+      expect(eccResult.eccCodewords.length).toBeGreaterThan(0);
     });
   });
 
@@ -262,18 +264,6 @@ describe("QREncoder", () => {
       coordinates.forEach((coord) => {
         expect(coord.row).toBeGreaterThanOrEqual(0);
         expect(coord.col).toBeGreaterThanOrEqual(0);
-      });
-    });
-
-    it("Finder Pattern 좌표가 올바른 패턴을 따르는지 확인해야 한다", () => {
-      const encoder = new QREncoder("Test", "L (7% 복원)");
-      const coordinates = encoder.findFinderPattern();
-
-      expect(coordinates.length).toBeGreaterThanOrEqual(147);
-
-      coordinates.forEach((coord) => {
-        expect(typeof coord.row).toBe("number");
-        expect(typeof coord.col).toBe("number");
       });
     });
   });

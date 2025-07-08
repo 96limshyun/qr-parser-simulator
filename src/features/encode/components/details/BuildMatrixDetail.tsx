@@ -7,7 +7,7 @@ interface BuildMatrixDetailProps {
 }
 
 const BuildMatrixDetail = ({ encodeInfo }: BuildMatrixDetailProps) => {
-  const { pattern, smallestVersion, text } = encodeInfo;
+  const { basePattern, smallestVersion, text } = encodeInfo;
   const matrixSize = smallestVersion * 4 + 17;
 
   const finderPatternCount = 147;
@@ -16,20 +16,20 @@ const BuildMatrixDetail = ({ encodeInfo }: BuildMatrixDetailProps) => {
   const darkModuleCount = 1;
   const formatInformationCount = 30;
 
-  const finderPattern = pattern.slice(0, finderPatternCount);
-  const alignmentPattern = pattern.slice(
+  const finderPattern = basePattern.slice(0, finderPatternCount);
+  const alignmentPattern = basePattern.slice(
     finderPatternCount,
     finderPatternCount + alignmentPatternCount,
   );
-  const timingPattern = pattern.slice(
+  const timingPattern = basePattern.slice(
     finderPatternCount + alignmentPatternCount,
     finderPatternCount + alignmentPatternCount + timingPatternCount,
   );
-  const darkModule = pattern.slice(
+  const darkModule = basePattern.slice(
     finderPatternCount + alignmentPatternCount + timingPatternCount,
     finderPatternCount + alignmentPatternCount + timingPatternCount + darkModuleCount,
   );
-  const formatInformation = pattern.slice(
+  const formatInformation = basePattern.slice(
     finderPatternCount + alignmentPatternCount + timingPatternCount + darkModuleCount,
     finderPatternCount
       + alignmentPatternCount
@@ -37,7 +37,7 @@ const BuildMatrixDetail = ({ encodeInfo }: BuildMatrixDetailProps) => {
       + darkModuleCount
       + formatInformationCount,
   );
-  const dataModules = pattern.slice(
+  const dataModules = basePattern.slice(
     finderPatternCount
       + alignmentPatternCount
       + timingPatternCount
