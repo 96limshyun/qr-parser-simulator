@@ -1,15 +1,16 @@
+import GenericGF from "@zxing/library/esm/core/common/reedsolomon/GenericGF";
+import ReedSolomonDecoder from "@zxing/library/esm/core/common/reedsolomon/ReedSolomonDecoder";
+
 import type { QRDecodeResult } from "@/libs/QRDecoder/types/QRDecodeResult";
 import type { ECLevel } from "@/types/ECCTable";
 
 import { ALIGNMENT_PATTERN_LOCATIONS } from "@/constants/alignmentPattern";
 import { ALPHANUMERIC_TABLE } from "@/constants/alphanumericTable";
 import { CHARACTER_COUNT_BITS_MAP } from "@/constants/characterCountBitsMap";
-import { ECC_MAP } from "@/constants/eccMap";
 import { ECC_TABLE } from "@/constants/eccTable";
 import { FINDER_PATTERN } from "@/constants/finderPattern";
-import { FORMAT_MASK } from "@/constants/formatMask";
+import { FORMAT_INFORMATION_STRINGS } from "@/constants/formatMask";
 import { MODE_MAP } from "@/constants/modeMap";
-import { ReedSolomon } from "@/libs/QRDecoder/utils/reedSolomon";
 
 export class QRDecoder {
   private matrix: number[][];
@@ -22,6 +23,10 @@ export class QRDecoder {
     this.version = this.getVersionByMatrixSize();
   }
 
+  /**
+   * QR 코드 크기에 따라 버전을 결정합니다.
+   * @returns 버전 번호 (1~40)
+   */
   public getVersionByMatrixSize(): number {
     if ((this.size - 21) % 4 !== 0) {
       throw new Error("Invalid QR matrix size");
@@ -33,6 +38,10 @@ export class QRDecoder {
     return version;
   }
 
+  /**
+   * 파인더 패턴의 위치를 검출합니다.
+   * @returns 파인더 패턴의 위치 배열
+   */
   public detectFinderPositions(): Array<{ rowStart: number; colStart: number }> {
     const positions: Array<{ rowStart: number; colStart: number }> = [];
 
@@ -53,6 +62,10 @@ export class QRDecoder {
     return positions;
   }
 
+  /**
+   * 알리멘테이션 패턴의 위치를 검출합니다.
+   * @returns 알리멘테이션 패턴의 위치 배열
+   */
   public detectAlignmentPositions(): Array<{ row: number; col: number }> {
     const centers = ALIGNMENT_PATTERN_LOCATIONS[this.version] || [];
     const positions: Array<{ row: number; col: number }> = [];
@@ -72,6 +85,10 @@ export class QRDecoder {
     return positions;
   }
 
+  /**
+   * 포맷 정보의 위치를 검출합니다.
+   * @returns 포맷 정보의 위치 배열
+   */
   public detectFormatPositions(): Array<{ row: number; col: number; value: number }> {
     const coords: [number, number][] = [];
 
@@ -101,6 +118,10 @@ export class QRDecoder {
     }));
   }
 
+  /**
+   * 포맷 정보를 디코딩합니다.
+   * @returns 포맷 정보 디코딩 결과
+   */
   public decodeFormatInfo(): {
     rawBits: string;
     unmaskedBits: string;
@@ -113,23 +134,42 @@ export class QRDecoder {
       .map((pos) => pos.value)
       .join("");
 
-    const unmaskedBitsNumber = parseInt(rawBitsStr, 2) ^ FORMAT_MASK;
-    const unmaskedBitsStr = unmaskedBitsNumber.toString(2).padStart(15, "0");
+    const bestMatch = { eccLevel: "알 수 없음", maskPattern: -1, unmaskedBits: "" };
+    let minErrors = Infinity;
 
-    const formatInfoBits = unmaskedBitsNumber >> 10;
+    for (const [eccLevel, maskPatterns] of Object.entries(FORMAT_INFORMATION_STRINGS)) {
+      for (const [maskPattern, expectedFormat] of Object.entries(maskPatterns)) {
+        const maskNumber = parseInt(maskPattern);
+        const expectedBits = expectedFormat.toString(2).padStart(15, "0");
 
-    const eccBits = (formatInfoBits >> 3) & 0b11;
-    const maskPattern = formatInfoBits & 0b111;
-    const eccLevel = ECC_MAP[eccBits] ?? "알 수 없음";
+        let errors = 0;
+        for (let i = 0; i < 15; i++) {
+          if (rawBitsStr[i] !== expectedBits[i]) {
+            errors++;
+          }
+        }
+
+        if (errors < minErrors) {
+          minErrors = errors;
+          bestMatch.eccLevel = eccLevel;
+          bestMatch.maskPattern = maskNumber;
+          bestMatch.unmaskedBits = expectedBits;
+        }
+      }
+    }
 
     return {
       rawBits: rawBitsStr,
-      unmaskedBits: unmaskedBitsStr,
-      eccLevel,
-      maskPattern,
+      unmaskedBits: bestMatch.unmaskedBits,
+      eccLevel: bestMatch.eccLevel,
+      maskPattern: bestMatch.maskPattern,
     };
   }
 
+  /**
+   * 타이밍 패턴의 위치를 검출합니다.
+   * @returns 타이밍 패턴의 위치 배열
+   */
   public detectTimingPositions(): Array<{ row: number; col: number; value: number }> {
     const positions: { row: number; col: number; value: number }[] = [];
 
@@ -152,6 +192,11 @@ export class QRDecoder {
     return positions;
   }
 
+  /**
+   * 예약된 위치를 만듭니다.
+   * 예약된 위치는 데이터 모듈이 아닌 위치입니다.
+   * @returns 예약된 위치 배열
+   */
   private createReservedMap(): boolean[][] {
     const reservedMap: boolean[][] = [];
 
@@ -166,6 +211,12 @@ export class QRDecoder {
     return reservedMap;
   }
 
+  /**
+   * 예약된 위치인지 확인합니다.
+   * @param row 행 번호
+   * @param col 열 번호
+   * @returns 예약된 위치인지 여부
+   */
   private isReserved(row: number, col: number): boolean {
     if (row === 7 && col <= 7) return true;
     if (col === 7 && row <= 7) return true;
@@ -211,6 +262,10 @@ export class QRDecoder {
     return false;
   }
 
+  /**
+   * 데이터 모듈의 위치를 검출합니다.
+   * @returns 데이터 모듈의 위치 배열
+   */
   private getDataModuleCoordinates(): Array<{ row: number; col: number }> {
     const reservedMap = this.createReservedMap();
     const coords: { row: number; col: number }[] = [];
@@ -246,6 +301,12 @@ export class QRDecoder {
     return coords;
   }
 
+  /**
+   * 알파벳 문자열을 디코딩합니다.
+   * @param dataBits 데이터 비트
+   * @param characterCount 문자 개수
+   * @returns 디코딩된 문자열
+   */
   private decodeAlphanumeric(dataBits: string, characterCount: number): string {
     let pointer = 0;
     let result = "";
@@ -274,6 +335,12 @@ export class QRDecoder {
     return result;
   }
 
+  /**
+   * 비트 문자열을 바이트 배열로 변환합니다.
+   * @param bits 비트 문자열
+   * @param characterCount 문자 개수
+   * @returns 바이트 배열
+   */
   private bitsToBytes(bits: string, characterCount: number): number[] {
     const bytes = [];
     for (let i = 0; i < characterCount; i++) {
@@ -284,6 +351,11 @@ export class QRDecoder {
     return bytes;
   }
 
+  /**
+   * 바이트 배열을 텍스트로 변환합니다.
+   * @param bytes 바이트 배열
+   * @returns 텍스트
+   */
   private bytesToText(bytes: number[]): string {
     try {
       return new TextDecoder("utf-8").decode(new Uint8Array(bytes));
@@ -292,6 +364,10 @@ export class QRDecoder {
     }
   }
 
+  /**
+   * 파인더 마스크를 생성합니다.
+   * @returns 파인더 마스크 배열
+   */
   public createFinderMask(): Array<{ row: number; col: number }> {
     const finderPositions = this.detectFinderPositions();
     const alignmentPositions = this.detectAlignmentPositions();
@@ -323,6 +399,10 @@ export class QRDecoder {
     return maskPositions;
   }
 
+  /**
+   * 타이밍 마스크를 생성합니다.
+   * @returns 타이밍 마스크 배열
+   */
   public createTimingMask(): Array<{ row: number; col: number }> {
     const maskPositions: Array<{ row: number; col: number }> = [];
 
@@ -337,6 +417,10 @@ export class QRDecoder {
     return maskPositions;
   }
 
+  /**
+   * 포맷 마스크를 생성합니다.
+   * @returns 포맷 마스크 배열
+   */
   public createFormatMask(): Array<{ row: number; col: number }> {
     const maskPositions: Array<{ row: number; col: number }> = [];
 
@@ -351,10 +435,18 @@ export class QRDecoder {
     return maskPositions;
   }
 
+  /**
+   * 데이터 마스크를 생성합니다.
+   * @returns 데이터 마스크 배열
+   */
   public createDataMask(): Array<{ row: number; col: number }> {
     return this.getDataModuleCoordinates();
   }
 
+  /**
+   * ECC 마스크를 생성합니다.
+   * @returns ECC 마스크 배열
+   */
   public createECCMask(): Array<{ row: number; col: number }> {
     const dataCoords = this.getDataModuleCoordinates();
 
@@ -370,6 +462,11 @@ export class QRDecoder {
     return eccCoords;
   }
 
+  /**
+   * ECC 상세 정보를 가져옵니다.
+   * @param unmaskedDataBits 데이터 비트
+   * @returns ECC 상세 정보
+   */
   public getECCDetail(unmaskedDataBits?: string) {
     const { eccLevel } = this.decodeFormatInfo();
     const eccLevelShort = eccLevel.split(" ")[0] as ECLevel;
@@ -417,10 +514,21 @@ export class QRDecoder {
     const eccBytes = eccBitsStr.match(/.{1,8}/g)?.map((byte) => parseInt(byte, 2) & 0xff) || [];
 
     const allCodewords = [...dataCodewords, ...eccBytes];
-    const eccResult = ReedSolomon.correctErrors(allCodewords, totalECCCodewords);
+    const corrected = Int32Array.from(allCodewords);
+    let errorCount = 0;
+    let correctionSuccess = true;
+    try {
+      const decoder = new ReedSolomonDecoder(GenericGF.QR_CODE_FIELD_256);
+      decoder.decode(corrected, totalECCCodewords);
+      for (let i = 0; i < allCodewords.length; i++) {
+        if (allCodewords[i] !== corrected[i]) errorCount++;
+      }
+    } catch {
+      correctionSuccess = false;
+    }
 
-    const correctedDataCodewords = eccResult.corrected.slice(0, totalDataCodewords);
-    const correctedECCCodewords = eccResult.corrected.slice(totalDataCodewords);
+    const correctedDataCodewords = Array.from(corrected.slice(0, totalDataCodewords));
+    const correctedECCCodewords = Array.from(corrected.slice(totalDataCodewords));
 
     return {
       eccInfo,
@@ -436,11 +544,15 @@ export class QRDecoder {
       eccBytes,
       correctedDataCodewords,
       correctedECCCodewords,
-      errorCount: eccResult.errorCount,
-      correctionSuccess: eccResult.success,
+      errorCount,
+      correctionSuccess,
     };
   }
 
+  /**
+   * QR 코드를 디코딩합니다.
+   * @returns 디코딩 결과
+   */
   public decode(): QRDecodeResult {
     const finderPositions = this.detectFinderPositions();
     const alignmentPositions = this.detectAlignmentPositions();

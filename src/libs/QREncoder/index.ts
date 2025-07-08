@@ -354,10 +354,6 @@ export class QREncoder {
     return pattern[row + 2][col + 2] === 1;
   }
 
-  public findFormatInformation(): { row: number; col: number }[] {
-    return this.findFormatInformationWithMask(0); // 기본값으로 마스크 0 사용
-  }
-
   public findFormatInformationWithMask(maskNumber: number): { row: number; col: number }[] {
     const version = this.getSmallestVersion();
     const matrixSize = version * 4 + 17;
