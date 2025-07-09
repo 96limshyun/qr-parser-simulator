@@ -9,7 +9,6 @@ import { ALPHANUMERIC_TABLE } from "@/constants/alphanumericTable";
 import { CHARACTER_COUNT_BITS_MAP } from "@/constants/characterCountBitsMap";
 import { ECC_TABLE } from "@/constants/eccTable";
 import { FINDER_PATTERN } from "@/constants/finderPattern";
-import { FORMAT_INFORMATION_STRINGS } from "@/constants/formatMask";
 import { DATA_MASK_PATTERNS } from "@/constants/maskPatterns";
 import { MODE_MAP } from "@/constants/modeMap";
 
@@ -135,35 +134,31 @@ export class QRDecoder {
       .map((pos) => pos.value)
       .join("");
 
-    const bestMatch = { eccLevel: "알 수 없음", maskPattern: -1, unmaskedBits: "" };
-    let minErrors = Infinity;
+    const formatMask = "101010000010010";
+    const unmaskedBits = rawBitsStr
+      .split("")
+      .map((bit, i) => (parseInt(bit) ^ parseInt(formatMask[i])).toString())
+      .join("");
 
-    for (const [eccLevel, maskPatterns] of Object.entries(FORMAT_INFORMATION_STRINGS)) {
-      for (const [maskPattern, expectedFormat] of Object.entries(maskPatterns)) {
-        const maskNumber = parseInt(maskPattern);
-        const expectedBits = expectedFormat.toString(2).padStart(15, "0");
+    // 그냥 unmaskedBits 그대로 쓰는 방식
+    const eccLevelBits = unmaskedBits.slice(0, 2);
+    const maskPatternBits = unmaskedBits.slice(2, 5);
 
-        let errors = 0;
-        for (let i = 0; i < 15; i++) {
-          if (rawBitsStr[i] !== expectedBits[i]) {
-            errors++;
-          }
-        }
+    const eccLevelMap: Record<string, string> = {
+      "00": "L",
+      "01": "M",
+      "10": "Q",
+      "11": "H",
+    };
 
-        if (errors < minErrors) {
-          minErrors = errors;
-          bestMatch.eccLevel = eccLevel;
-          bestMatch.maskPattern = maskNumber;
-          bestMatch.unmaskedBits = expectedBits;
-        }
-      }
-    }
+    const eccLevel = eccLevelMap[eccLevelBits] || "알 수 없음";
+    const maskPattern = parseInt(maskPatternBits, 2);
 
     return {
       rawBits: rawBitsStr,
-      unmaskedBits: bestMatch.unmaskedBits,
-      eccLevel: bestMatch.eccLevel,
-      maskPattern: bestMatch.maskPattern,
+      unmaskedBits,
+      eccLevel,
+      maskPattern,
     };
   }
 
