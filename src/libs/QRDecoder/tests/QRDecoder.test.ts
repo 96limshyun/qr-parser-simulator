@@ -425,12 +425,12 @@ describe("25x25 matrix", () => {
     expect(formatBits.length).toBe(15);
   });
 
-  it("25x25 매트릭스의 포맷 비트는 올바르게 검출되어야 한다.", () => {
+  it("25x25 매트릭스의 포맷 비트는 001111100111101로 검출되어야 한다.", () => {
     const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
     expect(formatBits).toBe("001111100111101");
   });
 
-  it("25x25 매트릭스의 포맷 비트는 올바르게 마스크 해제 되어야 한다.", () => {
+  it("25x25 매트릭스의 포맷 비트는 100101100101111로 마스크 해제 되어야 한다.", () => {
     const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
     const unmasked = qr.qrDecoder.unmaskFormatBits(formatBits);
     expect(unmasked).toBe("100101100101111");
