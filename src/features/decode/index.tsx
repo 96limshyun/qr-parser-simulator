@@ -20,6 +20,7 @@ const Decode = () => {
   useEffect(() => {
     setCurrentStep("Init");
     setIsPlaying(false);
+    console.log(matrix);
   }, [matrix]);
 
   return (

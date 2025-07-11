@@ -140,7 +140,6 @@ export class QRDecoder {
       .map((bit, i) => (parseInt(bit) ^ parseInt(formatMask[i])).toString())
       .join("");
 
-    // 그냥 unmaskedBits 그대로 쓰는 방식
     const eccLevelBits = unmaskedBits.slice(0, 2);
     const maskPatternBits = unmaskedBits.slice(2, 5);
 
