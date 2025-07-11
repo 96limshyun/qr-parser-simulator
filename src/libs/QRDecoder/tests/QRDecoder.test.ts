@@ -118,7 +118,7 @@ describe("21x21 matrix", () => {
     expect(separatorPositions.length).toBe(45);
   });
 
-  it("21x21 매트릭스의 다크 모듈 위치가 올바르게 검출되어야 한다.", () => {
+  it("21x21 매트릭스의 다크 모듈 위치가 13, 8 위치에 검출되어야 한다.", () => {
     const darkModule = qr.qrDecoder.detectDarkModulePosition(TEST_MATRIX_21_BY_21);
 
     expect(darkModule).toEqual({
@@ -128,7 +128,7 @@ describe("21x21 matrix", () => {
     });
   });
 
-  it("21x21 매트릭스의 파인더 패턴 영역은 예약되어야 한다.", () => {
+  it("21x21 매트릭스의 파인더 패턴 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(0, 0, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(3, 3, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(6, 6, TEST_MATRIX_21_BY_21)).toBe(true);
@@ -142,7 +142,7 @@ describe("21x21 matrix", () => {
     expect(qr.qrDecoder.isReserved(20, 6, TEST_MATRIX_21_BY_21)).toBe(true);
   });
 
-  it("21x21 매트릭스의 타이밍 패턴 영역은 예약되어야 한다.", () => {
+  it("21x21 매트릭스의 타이밍 패턴 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(6, 8, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(6, 12, TEST_MATRIX_21_BY_21)).toBe(true);
 
@@ -150,7 +150,7 @@ describe("21x21 matrix", () => {
     expect(qr.qrDecoder.isReserved(12, 6, TEST_MATRIX_21_BY_21)).toBe(true);
   });
 
-  it("21x21 매트릭스의 포맷 패턴 영역은 예약되어야 한다.", () => {
+  it("21x21 매트릭스의 포맷 패턴 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(8, 0, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(8, 5, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(8, 7, TEST_MATRIX_21_BY_21)).toBe(true);
@@ -161,14 +161,14 @@ describe("21x21 matrix", () => {
     expect(qr.qrDecoder.isReserved(20, 8, TEST_MATRIX_21_BY_21)).toBe(true);
   });
 
-  it("21x21 매트릭스의 separator 영역은 예약되어야 한다.", () => {
+  it("21x21 매트릭스의 separator 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(7, 0, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(7, 7, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(0, 7, TEST_MATRIX_21_BY_21)).toBe(true);
     expect(qr.qrDecoder.isReserved(6, 7, TEST_MATRIX_21_BY_21)).toBe(true);
   });
 
-  it("21x21 매트릭스의 다크 모듈은 예약되어야 한다.", () => {
+  it("21x21 매트릭스의 다크 모듈은 예약된 영역이여야 한다.", () => {
     const darkModule = qr.qrDecoder.detectDarkModulePosition(TEST_MATRIX_21_BY_21);
     expect(qr.qrDecoder.isReserved(darkModule.row, darkModule.col, TEST_MATRIX_21_BY_21)).toBe(
       true,
@@ -195,6 +195,34 @@ describe("21x21 matrix", () => {
     expect(dataPositions[7]).toEqual({ row: 17, col: 19, value: 0 });
     expect(dataPositions[8]).toEqual({ row: 16, col: 20, value: 0 });
     expect(dataPositions[9]).toEqual({ row: 16, col: 19, value: 1 });
+  });
+
+  it("21x21 매트릭스의 포맷 비트는 15개가 되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    expect(formatBits.length).toBe(15);
+  });
+
+  it("21x21 매트릭스의 포맷 비트는 15개가 되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    expect(formatBits).toBe("111110110101010");
+  });
+
+  it("21x21 테스트 매트릭스의 포맷 비트의 마스크 해제 후 비트는 010100110111000으로 검출되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const unmasked = qr.qrDecoder.unmaskFormatBits(formatBits);
+    expect(unmasked).toBe("010100110111000");
+  });
+
+  it("21x21 테스트 매트릭스의 포맷 비트의 ECC 레벨은 01: L로 검출되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const ecLevel = qr.qrDecoder.getECLevel(formatBits);
+    expect(ecLevel).toBe("L");
+  });
+
+  it("21x21 테스트 매트릭스의 포맷 비트의 마스크 패턴 번호는 010비트로 검출되어 10진수 2로 변환되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const maskPattern = qr.qrDecoder.getMaskPattern(formatBits);
+    expect(maskPattern).toBe(2);
   });
 });
 
@@ -317,7 +345,7 @@ describe("25x25 matrix", () => {
     });
   });
 
-  it("25x25 매트릭스의 파인더 패턴 영역은 예약되어야 한다.", () => {
+  it("25x25 매트릭스의 파인더 패턴 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(0, 0, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(3, 3, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(6, 6, TEST_MATRIX_25_BY_25)).toBe(true);
@@ -331,13 +359,13 @@ describe("25x25 matrix", () => {
     expect(qr.qrDecoder.isReserved(24, 6, TEST_MATRIX_25_BY_25)).toBe(true);
   });
 
-  it("25x25 매트릭스의 알리먼트 패턴 영역은 예약되어야 한다.", () => {
+  it("25x25 매트릭스의 알리먼트 패턴 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(18, 18, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(16, 16, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(20, 20, TEST_MATRIX_25_BY_25)).toBe(true);
   });
 
-  it("25x25 매트릭스의 타이밍 패턴 영역은 예약되어야 한다.", () => {
+  it("25x25 매트릭스의 타이밍 패턴 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(6, 8, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(6, 16, TEST_MATRIX_25_BY_25)).toBe(true);
 
@@ -345,7 +373,7 @@ describe("25x25 matrix", () => {
     expect(qr.qrDecoder.isReserved(16, 6, TEST_MATRIX_25_BY_25)).toBe(true);
   });
 
-  it("25x25 매트릭스의 포맷 패턴 영역은 예약되어야 한다.", () => {
+  it("25x25 매트릭스의 포맷 패턴 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(8, 0, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(8, 5, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(8, 7, TEST_MATRIX_25_BY_25)).toBe(true);
@@ -356,14 +384,14 @@ describe("25x25 matrix", () => {
     expect(qr.qrDecoder.isReserved(24, 8, TEST_MATRIX_25_BY_25)).toBe(true);
   });
 
-  it("25x25 매트릭스의 separator 영역은 예약되어야 한다.", () => {
+  it("25x25 매트릭스의 separator 영역은 예약된 영역이여야 한다.", () => {
     expect(qr.qrDecoder.isReserved(7, 0, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(7, 7, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(0, 7, TEST_MATRIX_25_BY_25)).toBe(true);
     expect(qr.qrDecoder.isReserved(6, 7, TEST_MATRIX_25_BY_25)).toBe(true);
   });
 
-  it("25x25 매트릭스의 다크 모듈은 예약되어야 한다.", () => {
+  it("25x25 매트릭스의 다크 모듈은 예약된 영역이여야 한다.", () => {
     const darkModule = qr.qrDecoder.detectDarkModulePosition(TEST_MATRIX_25_BY_25);
     expect(qr.qrDecoder.isReserved(darkModule.row, darkModule.col, TEST_MATRIX_25_BY_25)).toBe(
       true,
@@ -390,5 +418,33 @@ describe("25x25 matrix", () => {
     expect(dataPositions[7]).toEqual({ row: 21, col: 23, value: 0 });
     expect(dataPositions[8]).toEqual({ row: 20, col: 24, value: 1 });
     expect(dataPositions[9]).toEqual({ row: 20, col: 23, value: 1 });
+  });
+
+  it("25x25 매트릭스의 포맷 비트는 15개가 되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    expect(formatBits.length).toBe(15);
+  });
+
+  it("25x25 매트릭스의 포맷 비트는 올바르게 검출되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    expect(formatBits).toBe("001111100111101");
+  });
+
+  it("25x25 매트릭스의 포맷 비트는 올바르게 마스크 해제 되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const unmasked = qr.qrDecoder.unmaskFormatBits(formatBits);
+    expect(unmasked).toBe("100101100101111");
+  });
+
+  it("25x25 테스트 매트릭스의 포맷 비트의 ECC 레벨은 10: H로 검출되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const ecLevel = qr.qrDecoder.getECLevel(formatBits);
+    expect(ecLevel).toBe("H");
+  });
+
+  it("25x25 테스트 매트릭스의 포맷 비트의 마스크 패턴 번호는 001비트로 검출되어 10진수 1로 변환되어야 한다.", () => {
+    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const maskPattern = qr.qrDecoder.getMaskPattern(formatBits);
+    expect(maskPattern).toBe(2);
   });
 });

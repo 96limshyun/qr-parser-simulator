@@ -1,5 +1,7 @@
 import { ALIGNMENT_PATTERN_LOCATIONS } from "@/constants/alignmentPattern";
+import { ECC_MAP } from "@/constants/eccMap";
 import { FINDER_PATTERN } from "@/constants/finderPattern";
+import { MASK_PATTERN } from "@/constants/formatMask";
 
 export class QRDecoder {
   getVersionByMatrixSize(matrixSize: number) {
@@ -210,5 +212,35 @@ export class QRDecoder {
     if (inDarkModule) return true;
 
     return false;
+  }
+
+  getUnmaskedFormatBits(matrix: number[][]) {
+    const formatPositions = this.detectFormatPositions(matrix);
+    const unmaskedFormatBits = formatPositions
+      .map(({ value }) => value)
+      .join("")
+      .slice(0, 15);
+    return unmaskedFormatBits;
+  }
+
+  unmaskFormatBits(maskedFormatBits: string): string {
+    let result = "";
+    for (let i = 0; i < maskedFormatBits.length; i++) {
+      result += maskedFormatBits[i] === MASK_PATTERN[i] ? "0" : "1";
+    }
+    return result;
+  }
+
+  getECLevel(formatBits: string): string {
+    const unmasked = this.unmaskFormatBits(formatBits);
+    const ecBits = unmasked.slice(0, 2);
+
+    return ECC_MAP[ecBits] ?? "Unknown";
+  }
+
+  getMaskPattern(formatBits: string): number {
+    const unmasked = this.unmaskFormatBits(formatBits);
+    const maskBits = unmasked.slice(2, 5);
+    return parseInt(maskBits, 2);
   }
 }
