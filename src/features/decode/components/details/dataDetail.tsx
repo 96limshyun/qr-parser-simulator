@@ -1,20 +1,25 @@
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
 import { ALPHANUMERIC_TABLE } from "@/constants/alphanumericTable";
+import { MODE_MAP } from "@/constants/modeMap";
+import { qr } from "@/libs/QR";
 import Card from "@/ui/Card";
 import Text from "@/ui/Text";
 import Tooltip from "@/ui/Tooltip";
 
-const DataDetail = ({ qrDecodeResult }: DetailProps) => {
-  const { unmaskedDataBits, mode, characterCount, decodedText } = qrDecodeResult;
+const DataDetail = ({ matrix }: DetailProps) => {
+  const version = qr.qrDecoder.getVersionByMatrixSize(matrix.length);
+  const unmaskedDataBits = qr.qrDecoder.unmaskDataBits(matrix);
+  const decodedText = qr.qrDecoder.decodeBitToText(matrix);
+  const modeBits = unmaskedDataBits.slice(0, 4);
+  const mode = MODE_MAP[modeBits];
 
   const isURL = decodedText.startsWith("http://") || decodedText.startsWith("https://");
 
-  const analyzeDataBits = (bits: string, mode: string, characterCount: number) => {
+  const analyzeDataBits = (bits: string) => {
     if (!bits || bits.length < 4) return null;
 
-    const modeBits = bits.slice(0, 4);
-    const charCountBitsLength = getCharCountBitsLength(mode, qrDecodeResult.version);
+    const charCountBitsLength = getCharCountBitsLength(mode, version);
     const charCountBits = bits.slice(4, 4 + charCountBitsLength);
     const dataBits = bits.slice(4 + charCountBitsLength);
 
@@ -24,7 +29,7 @@ const DataDetail = ({ qrDecodeResult }: DetailProps) => {
       dataBits,
       charCountBitsLength,
       modeDescription: getModeDescription(mode),
-      charCountDescription: getCharCountDescription(mode, characterCount),
+      charCountDescription: getCharCountDescription(mode, charCountBits),
     };
   };
 
@@ -53,11 +58,12 @@ const DataDetail = ({ qrDecodeResult }: DetailProps) => {
     return descriptions[mode] || "알 수 없는 모드";
   };
 
-  const getCharCountDescription = (mode: string, count: number) => {
-    return `${mode} 모드에서 ${count}개의 문자를 인코딩했습니다.`;
+  const getCharCountDescription = (mode: string, charCountBits: string) => {
+    const charCount = parseInt(charCountBits, 2);
+    return `${mode} 모드에서 ${charCount}개의 문자를 인코딩했습니다.`;
   };
 
-  const dataAnalysis = analyzeDataBits(unmaskedDataBits, mode, characterCount);
+  const dataAnalysis = analyzeDataBits(unmaskedDataBits);
 
   const modeBitsTooltip = (
     <div className="space-y-1">
@@ -157,7 +163,9 @@ const DataDetail = ({ qrDecodeResult }: DetailProps) => {
       <div className="mt-2 space-y-1">
         <Text color="gray">총 비트 길이: {unmaskedDataBits.length} bits</Text>
         <Text color="gray">모드: {mode}</Text>
-        <Text color="gray">문자 수 (Character Count): {characterCount}</Text>
+        <Text color="gray">
+          문자 수 (Character Count): {parseInt(dataAnalysis!.charCountBits, 2)}
+        </Text>
         <Text color="gray">디코딩된 텍스트: {decodedText}</Text>
         {isURL && (
           <div className="mt-2">

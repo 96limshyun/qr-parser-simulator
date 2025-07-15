@@ -1,30 +1,12 @@
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
+import { qr } from "@/libs/QR";
 import Text from "@/ui/Text";
 
-const ECCDetail = ({ qrDecodeResult }: DetailProps) => {
-  if (!qrDecodeResult) {
-    return <div>Error: ECC info not found</div>;
-  }
-  const {
-    totalDataCodewords,
-    totalECCCodewords,
-    totalCodewords,
-    dataBits,
-    dataCodewords,
-    eccBytes,
-  } = qrDecodeResult;
+const ECCDetail = ({ matrix }: DetailProps) => {
+  const eccDetail = qr.qrDecoder.getECCDetail(matrix);
 
-  if (
-    totalDataCodewords === undefined
-    || totalECCCodewords === undefined
-    || totalCodewords === undefined
-    || !dataBits
-    || !dataCodewords
-    || !eccBytes
-  ) {
-    return <div>Error: ECC info not found</div>;
-  }
+  const { dataBits, correctedDataCodewords, correctedECCCodewords } = eccDetail;
 
   return (
     <div className="space-y-1 text-sm leading-6">
@@ -47,37 +29,39 @@ const ECCDetail = ({ qrDecodeResult }: DetailProps) => {
         </li>
       </ul>
 
-      <Text color="gray">
-        QR 코드는 모든 정보를 <strong>비트(Bit)</strong>라는 작은 단위(0 또는 1)로 표현합니다.
-        그리고 8개의 비트가 모여 하나의 <strong>코드워드</strong>(즉, 1바이트)를 만듭니다.
-      </Text>
+      <>
+        <Text color="gray">
+          QR 코드는 모든 정보를 <strong>비트(Bit)</strong>라는 작은 단위(0 또는 1)로 표현합니다.
+          그리고 8개의 비트가 모여 하나의 <strong>코드워드</strong>(즉, 1바이트)를 만듭니다.
+        </Text>
 
-      <Text>
-        ➤ 총 데이터 코드워드 수: {totalDataCodewords}개
-        <br />➤ 총 ECC 코드워드 수: {totalECCCodewords}개
-        <br />➤ 총 코드워드 수: {totalCodewords}개
-      </Text>
+        <Text>
+          ➤ 총 데이터 코드워드 수: {correctedDataCodewords.length}개
+          <br />➤ 총 ECC 코드워드 수: {correctedECCCodewords.length}개
+          <br />➤ 총 코드워드 수: {correctedDataCodewords.length + correctedECCCodewords.length}개
+        </Text>
 
-      <Text color="gray">
-        아래는 QR 코드에서 읽어낸 실제 데이터 비트와 각각의 코드워드 값들입니다.
-      </Text>
+        <Text color="gray">
+          아래는 QR 코드에서 읽어낸 실제 데이터 비트와 각각의 코드워드 값들입니다.
+        </Text>
 
-      <Text className="bg-gray-800 text-white font-mono p-2 rounded break-all">
-        <strong>데이터 비트:</strong> {dataBits || "(데이터 없음)"}
-      </Text>
+        <Text className="bg-gray-800 text-white font-mono p-2 rounded break-all">
+          <strong>데이터 비트:</strong> {dataBits || "(데이터 없음)"}
+        </Text>
 
-      <Text className="bg-gray-800 text-white font-mono p-2 rounded break-all">
-        <strong>데이터 코드워드 (10진수):</strong> {dataCodewords.join(", ")}
-      </Text>
+        <Text className="bg-gray-800 text-white font-mono p-2 rounded break-all">
+          <strong>데이터 코드워드 (10진수):</strong> {correctedDataCodewords.join(", ")}
+        </Text>
 
-      <Text className="bg-gray-800 text-white font-mono p-2 rounded break-all">
-        <strong>ECC 코드워드 (10진수):</strong> {eccBytes.join(", ")}
-      </Text>
+        <Text className="bg-gray-800 text-white font-mono p-2 rounded break-all">
+          <strong>ECC 코드워드 (10진수):</strong> {correctedECCCodewords.join(", ")}
+        </Text>
 
-      <Text color="gray">
-        예를 들어, 데이터 코드워드 값이 <code>65</code>라면 이는 아스키 문자 <code>'A'</code>를
-        의미합니다. (A의 아스키 코드값은 65입니다.)
-      </Text>
+        <Text color="gray">
+          예를 들어, 데이터 코드워드 값이 <code>65</code>라면 이는 아스키 문자 <code>'A'</code>를
+          의미합니다. (A의 아스키 코드값은 65입니다.)
+        </Text>
+      </>
     </div>
   );
 };

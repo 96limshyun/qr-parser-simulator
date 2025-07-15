@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 
 import type { DecodeStep } from "@/features/decode/types/decodeStep";
 
@@ -7,15 +7,11 @@ import QrMatrixPlayer from "@/features/decode/components/QrMatrixPlayer";
 import QrScanner from "@/features/decode/components/QrScanner";
 import StepDetailCard from "@/features/decode/components/StepDetailCard";
 import { DEFAULT_MATRIX } from "@/features/decode/constants/defaultMatrix";
-import { QRDecoder } from "@/libs/QRDecoder";
 
 const Decode = () => {
   const [matrix, setMatrix] = useState<number[][]>(DEFAULT_MATRIX);
   const [currentStep, setCurrentStep] = useState<DecodeStep>("Init");
   const [isPlaying, setIsPlaying] = useState(false);
-
-  const qrDecoder = useMemo(() => new QRDecoder(matrix), [matrix]);
-  const decodeResult = useMemo(() => qrDecoder.decode(), [qrDecoder]);
 
   useEffect(() => {
     setCurrentStep("Init");
@@ -31,12 +27,10 @@ const Decode = () => {
           setCurrentStep={setCurrentStep}
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
-          qrDecoder={qrDecoder}
         />
         <StepDetailCard
+          matrix={matrix}
           currentStep={currentStep}
-          qrDecoder={qrDecoder}
-          qrDecodeResult={decodeResult}
         />
       </div>
       <div className="gap-2 flex flex-col">

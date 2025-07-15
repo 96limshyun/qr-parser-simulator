@@ -4,7 +4,7 @@ import FinderDetail from "@/features/decode/components/details/FinderDetail";
 import FormatDetail from "@/features/decode/components/details/FormatDetail";
 import QrResultDetail from "@/features/decode/components/details/QrResultDetail";
 import TimingDetail from "@/features/decode/components/details/TimingDetail";
-import { QRDecoder } from "@/libs/QRDecoder";
+import { qr } from "@/libs/QR";
 
 export const DECODE_STEPS = [
   {
@@ -20,8 +20,10 @@ export const DECODE_STEPS = [
     title: "위치 탐지 패턴",
     description: "세 모서리 위치 탐지 패턴을 검출합니다.",
     color: "red",
-    maskFn: (qrDecoder: QRDecoder) => {
-      return qrDecoder.createFinderMask();
+    maskFn: (matrix: number[][]) => {
+      const finderPositions = qr.qrDecoder.detectFinderPositions(matrix);
+      const alignmentPositions = qr.qrDecoder.detectAlignmentPositions(matrix);
+      return [...finderPositions, ...alignmentPositions];
     },
     stepDetailComponent: FinderDetail,
   },
@@ -30,8 +32,8 @@ export const DECODE_STEPS = [
     title: "타이밍 패턴",
     description: "행·열 타이밍 패턴을 검출합니다.",
     color: "blue",
-    maskFn: (qrDecoder: QRDecoder) => {
-      return qrDecoder.createTimingMask();
+    maskFn: (matrix: number[][]) => {
+      return qr.qrDecoder.detectTimingPositions(matrix);
     },
     stepDetailComponent: TimingDetail,
   },
@@ -40,8 +42,8 @@ export const DECODE_STEPS = [
     title: "포맷 정보",
     description: "에러 정정 레벨 및 마스크 패턴을 해석합니다.",
     color: "green",
-    maskFn: (qrDecoder: QRDecoder) => {
-      return qrDecoder.createFormatMask();
+    maskFn: (matrix: number[][]) => {
+      return qr.qrDecoder.detectFormatPositions(matrix);
     },
     stepDetailComponent: FormatDetail,
   },
@@ -50,8 +52,8 @@ export const DECODE_STEPS = [
     title: "데이터 모듈",
     description: "데이터 영역 비트를 추출합니다.",
     color: "purple",
-    maskFn: (qrDecoder: QRDecoder) => {
-      return qrDecoder.createDataMask();
+    maskFn: (matrix: number[][]) => {
+      return qr.qrDecoder.detectDataPositions(matrix);
     },
     stepDetailComponent: DataDetail,
   },
@@ -60,8 +62,8 @@ export const DECODE_STEPS = [
     title: "오류 정정 코드",
     description: "리드‑솔로몬 오류 정정을 수행합니다.",
     color: "orange",
-    maskFn: (qrDecoder: QRDecoder) => {
-      return qrDecoder.createECCMask();
+    maskFn: (matrix: number[][]) => {
+      return qr.qrDecoder.detectECCPositions(matrix);
     },
     stepDetailComponent: ECCDetail,
   },

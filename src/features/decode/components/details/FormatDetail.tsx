@@ -2,63 +2,34 @@ import { LiaKeySolid } from "react-icons/lia";
 
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
+import { qr } from "@/libs/QR";
 import Card from "@/ui/Card";
 import Text from "@/ui/Text";
 import Tooltip from "@/ui/Tooltip";
 
-const FormatDetail = ({ color, qrDecoder, qrDecodeResult }: DetailProps) => {
-  const positions = qrDecoder.detectFormatPositions();
+const FormatDetail = ({ color, matrix }: DetailProps) => {
+  const positions = qr.qrDecoder.detectFormatPositions(matrix);
+  const maskedFormatBits = positions.map(({ value }) => value).join("");
+  const unmaskedFormatBits = qr.qrDecoder.unmaskFormatBits(maskedFormatBits);
 
-  const formatInfo =
-    qrDecodeResult ?
-      {
-        rawBits: qrDecodeResult.rawFormatBits,
-        unmaskedBits: qrDecodeResult.unmaskedFormatBits,
-        eccLevel: qrDecodeResult.eccLevel,
-        maskPattern: qrDecodeResult.maskPattern,
-      }
-    : qrDecoder.decodeFormatInfo();
-
-  const analyzeFormatBits = (bits: string) => {
-    if (bits.length !== 15) return null;
-
-    const eccLevelBits = bits.slice(0, 2);
-    const maskPatternBits = bits.slice(2, 5);
-    const bchBits = bits.slice(5, 15);
-
-    const eccLevelMap: Record<string, string> = {
-      "00": "L (Low) - 7% 복구 가능",
-      "01": "M (Medium) - 15% 복구 가능",
-      "10": "Q (Quartile) - 25% 복구 가능",
-      "11": "H (High) - 30% 복구 가능",
-    };
-
-    return {
-      eccLevel: eccLevelMap[eccLevelBits] || "알 수 없음",
-      maskPattern: `패턴 ${parseInt(maskPatternBits, 2)}번`,
-      bchCode: bchBits,
-      eccLevelBits,
-      maskPatternBits,
-    };
-  };
-
-  const formatAnalysis = analyzeFormatBits(formatInfo.unmaskedBits);
+  const eccLevel = qr.qrDecoder.getECLevel(maskedFormatBits);
+  const maskPattern = qr.qrDecoder.getMaskPattern(maskedFormatBits);
 
   const eccLevelTooltip = (
     <div className="space-y-1">
       <div className="font-bold mb-2">오류 정정 레벨 (ECC Level):</div>
       <div className="space-y-1 text-xs">
         <div>
-          <span className="font-mono">00</span> - L (Low): 7% 데이터 복구 가능
+          <span className="font-mono">01</span> - L (Low): 7% 데이터 복구 가능
         </div>
         <div>
-          <span className="font-mono">01</span> - M (Medium): 15% 데이터 복구 가능
+          <span className="font-mono">00</span> - M (Medium): 15% 데이터 복구 가능
         </div>
         <div>
-          <span className="font-mono">10</span> - Q (Quartile): 25% 데이터 복구 가능
+          <span className="font-mono">11</span> - Q (Quartile): 25% 데이터 복구 가능
         </div>
         <div>
-          <span className="font-mono">11</span> - H (High): 30% 데이터 복구 가능
+          <span className="font-mono">10</span> - H (High): 30% 데이터 복구 가능
         </div>
       </div>
       <div className="mt-2 text-xs text-gray-300">
@@ -155,29 +126,29 @@ const FormatDetail = ({ color, qrDecoder, qrDecodeResult }: DetailProps) => {
           fontSize="sm"
           color={color}
         >
-          포맷 원본 비트: {formatInfo.rawBits}
+          포맷 원본 비트: {maskedFormatBits}
         </Text>
         <Text
           fontSize="sm"
           color={color}
         >
-          마스크 해제 후 비트: {formatInfo.unmaskedBits}
+          마스크 해제 후 비트: {unmaskedFormatBits}
         </Text>
         <Text
           fontSize="sm"
           color={color}
         >
-          오류 정정 수준: {formatInfo.eccLevel}
+          오류 정정 수준: {eccLevel}
         </Text>
         <Text
           fontSize="sm"
           color={color}
         >
-          마스크 패턴 번호: {formatInfo.maskPattern}번
+          마스크 패턴 번호: {maskPattern}번
         </Text>
       </div>
 
-      {formatAnalysis && (
+      {eccLevel && (
         <>
           <Text
             fontWeight="bold"
@@ -225,9 +196,7 @@ const FormatDetail = ({ color, qrDecoder, qrDecodeResult }: DetailProps) => {
                 >
                   <div className="flex items-center gap-2 cursor-help">
                     <span className="bg-blue-500 px-2 py-1 rounded">오류 정정 레벨</span>
-                    <span>
-                      {formatAnalysis.eccLevelBits} ({formatAnalysis.eccLevel})
-                    </span>
+                    <span>{eccLevel}</span>
                   </div>
                 </Tooltip>
                 <Tooltip
@@ -236,14 +205,12 @@ const FormatDetail = ({ color, qrDecoder, qrDecodeResult }: DetailProps) => {
                 >
                   <div className="flex items-center gap-2 cursor-help">
                     <span className="bg-green-500 px-2 py-1 rounded">마스크 패턴</span>
-                    <span>
-                      {formatAnalysis.maskPatternBits} ({formatAnalysis.maskPattern})
-                    </span>
+                    <span>{maskPattern}</span>
                   </div>
                 </Tooltip>
                 <div className="flex items-center gap-2">
                   <span className="bg-purple-500 px-2 py-1 rounded">BCH 오류 정정 코드</span>
-                  <span>{formatAnalysis.bchCode}</span>
+                  <span>{unmaskedFormatBits.slice(4, 15)}</span>
                 </div>
               </div>
             </div>
