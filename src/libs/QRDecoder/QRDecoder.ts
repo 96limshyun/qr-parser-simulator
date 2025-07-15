@@ -19,6 +19,7 @@ export class QRDecoder {
     return version;
   }
   detectFinderPositions(matrix: number[][]) {
+    const startPositions = [];
     const positions: { row: number; col: number }[] = [];
 
     for (let rowStart = 0; rowStart <= matrix.length - 7; rowStart++) {
@@ -32,17 +33,25 @@ export class QRDecoder {
             }
           }
         }
-        if (matched) positions.push({ row: rowStart, col: colStart });
+        if (matched) startPositions.push({ row: rowStart, col: colStart });
       }
     }
+
+    startPositions.forEach(({ row, col }) => {
+      for (let y = 0; y < 7; y++) {
+        for (let x = 0; x < 7; x++) {
+          positions.push({ row: row + y, col: col + x });
+        }
+      }
+    });
     return positions;
   }
 
   detectAlignmentPositions(matrix: number[][]) {
     const version = this.getVersionByMatrixSize(matrix.length);
     const centers = ALIGNMENT_PATTERN_LOCATIONS[version] || [];
-    const positions = [];
-
+    const positions: { row: number; col: number }[] = [];
+    const centerPositions = [];
     for (const row of centers) {
       for (const col of centers) {
         if (
@@ -52,9 +61,22 @@ export class QRDecoder {
         ) {
           continue;
         }
-        positions.push({ row, col });
+        centerPositions.push({ row, col });
       }
     }
+
+    centerPositions.forEach(({ row, col }) => {
+      const startRow = row - 2;
+      const startCol = col - 2;
+      const endRow = row + 2;
+      const endCol = col + 2;
+
+      for (let y = startRow; y <= endRow; y++) {
+        for (let x = startCol; x <= endCol; x++) {
+          positions.push({ row: y, col: x });
+        }
+      }
+    });
     return positions;
   }
 
@@ -258,15 +280,13 @@ export class QRDecoder {
   isReserved(row: number, col: number, matrix: number[][]) {
     const finderPositions = this.detectFinderPositions(matrix);
     const inFinder = finderPositions.some(({ row: finderRow, col: finderCol }) => {
-      return row >= finderRow && row < finderRow + 7 && col >= finderCol && col < finderCol + 7;
+      return row === finderRow && col === finderCol;
     });
     if (inFinder) return true;
 
     const alignmentPositions = this.detectAlignmentPositions(matrix);
     const inAlignment = alignmentPositions.some(({ row: alignRow, col: alignCol }) => {
-      return (
-        row >= alignRow - 2 && row <= alignRow + 2 && col >= alignCol - 2 && col <= alignCol + 2
-      );
+      return row === alignRow && col === alignCol;
     });
     if (inAlignment) return true;
 
