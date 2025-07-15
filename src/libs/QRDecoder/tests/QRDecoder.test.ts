@@ -198,31 +198,42 @@ describe("21x21 matrix", () => {
   });
 
   it("21x21 매트릭스의 포맷 비트는 15개가 되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_21_BY_21);
     expect(formatBits.length).toBe(15);
   });
 
   it("21x21 매트릭스의 포맷 비트는 15개가 되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_21_BY_21);
     expect(formatBits).toBe("111110110101010");
   });
 
   it("21x21 테스트 매트릭스의 포맷 비트의 마스크 해제 후 비트는 010100110111000으로 검출되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_21_BY_21);
     const unmasked = qr.qrDecoder.unmaskFormatBits(formatBits);
     expect(unmasked).toBe("010100110111000");
   });
 
   it("21x21 테스트 매트릭스의 포맷 비트의 ECC 레벨은 01: L로 검출되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_21_BY_21);
     const ecLevel = qr.qrDecoder.getECLevel(formatBits);
     expect(ecLevel).toBe("L");
   });
 
   it("21x21 테스트 매트릭스의 포맷 비트의 마스크 패턴 번호는 010비트로 검출되어 10진수 2로 변환되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_21_BY_21);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_21_BY_21);
     const maskPattern = qr.qrDecoder.getMaskPattern(formatBits);
     expect(maskPattern).toBe(2);
+  });
+
+  it("21x21 테스트 매트릭스의 포맷 비트(010100110111000, version: 1, 에러 수준 L, 마스크 패턴 2)의 ECC 정보는 총 19개의 데이터 비트와 7개의 ECC 비트로 검출되어야 한다.", () => {
+    const eccInfo = qr.qrDecoder.getErrorCorrectionInfo(TEST_MATRIX_21_BY_21);
+    expect(eccInfo?.totalDataCodewords).toBe(19);
+    expect(eccInfo?.ecCodewordsPerBlock).toBe(7);
+  });
+
+  it("21x21 테스트 매트릭스는 마스크 해체 후 모드는 Alphanumeric이고 문자 개수는 11개로 검출되어 HELLO WORLD 문자열로 디코딩되어야 한다.", () => {
+    const decodedText = qr.qrDecoder.decodeBitToText(TEST_MATRIX_21_BY_21);
+    expect(decodedText).toBe("HELLO WORLD");
   });
 });
 
@@ -421,30 +432,41 @@ describe("25x25 matrix", () => {
   });
 
   it("25x25 매트릭스의 포맷 비트는 15개가 되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_25_BY_25);
     expect(formatBits.length).toBe(15);
   });
 
   it("25x25 매트릭스의 포맷 비트는 001111100111101로 검출되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_25_BY_25);
     expect(formatBits).toBe("001111100111101");
   });
 
   it("25x25 매트릭스의 포맷 비트는 100101100101111로 마스크 해제 되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_25_BY_25);
     const unmasked = qr.qrDecoder.unmaskFormatBits(formatBits);
     expect(unmasked).toBe("100101100101111");
   });
 
   it("25x25 테스트 매트릭스의 포맷 비트의 ECC 레벨은 10: H로 검출되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_25_BY_25);
     const ecLevel = qr.qrDecoder.getECLevel(formatBits);
     expect(ecLevel).toBe("H");
   });
 
   it("25x25 테스트 매트릭스의 포맷 비트의 마스크 패턴 번호는 001비트로 검출되어 10진수 1로 변환되어야 한다.", () => {
-    const formatBits = qr.qrDecoder.getUnmaskedFormatBits(TEST_MATRIX_25_BY_25);
+    const formatBits = qr.qrDecoder.getMaskedFormatBits(TEST_MATRIX_25_BY_25);
     const maskPattern = qr.qrDecoder.getMaskPattern(formatBits);
     expect(maskPattern).toBe(2);
+  });
+
+  it("25x25 테스트 매트릭스의 포맷 비트(100101100101111, version: 2, 에러 수준 H, 마스크 패턴 2)의 ECC 정보는 총 19개의 데이터 비트와 7개의 ECC 비트로 검출되어야 한다.", () => {
+    const eccInfo = qr.qrDecoder.getErrorCorrectionInfo(TEST_MATRIX_25_BY_25);
+    expect(eccInfo?.totalDataCodewords).toBe(16);
+    expect(eccInfo?.ecCodewordsPerBlock).toBe(28);
+  });
+
+  it("25x25 테스트 매트릭스는 마스크 해체 후 모드는 Byte이고 문자 개수는 11개로 검출되어 바이트 배열로 디코딩되어야 한다.", () => {
+    const decodedText = qr.qrDecoder.decodeBitToText(TEST_MATRIX_25_BY_25);
+    expect(decodedText).toBe("bizhows.com");
   });
 });

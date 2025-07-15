@@ -45,7 +45,7 @@ const useQrScanner = (setMatrix: Dispatch<SetStateAction<number[][]>>) => {
           return;
         }
 
-        const qr = QRCode.create(result.data, { errorCorrectionLevel: "M" });
+        const qr = QRCode.create(result.data);
         const mod = qr.modules;
         const matrix = Array.from({ length: mod.size }, (_, row) =>
           Array.from({ length: mod.size }, (_, col) => (mod.get(col, row) ? 1 : 0)),

@@ -1,7 +1,17 @@
+import GenericGF from "@zxing/library/esm/core/common/reedsolomon/GenericGF";
+import ReedSolomonDecoder from "@zxing/library/esm/core/common/reedsolomon/ReedSolomonDecoder";
+
+import type { ECLevel } from "@/types/ECCTable";
+
 import { ALIGNMENT_PATTERN_LOCATIONS } from "@/constants/alignmentPattern";
+import { ALPHANUMERIC_TABLE } from "@/constants/alphanumericTable";
+import { CHARACTER_COUNT_BITS_MAP } from "@/constants/characterCountBitsMap";
 import { ECC_MAP } from "@/constants/eccMap";
+import { ECC_TABLE } from "@/constants/eccTable";
 import { FINDER_PATTERN } from "@/constants/finderPattern";
 import { MASK_PATTERN } from "@/constants/formatMask";
+import { DATA_MASK_PATTERNS } from "@/constants/maskPatterns";
+import { MODE_MAP } from "@/constants/modeMap";
 
 export class QRDecoder {
   getVersionByMatrixSize(matrixSize: number) {
@@ -141,6 +151,12 @@ export class QRDecoder {
   detectDataPositions(matrix: number[][]) {
     const positions = [];
 
+    const version = this.getVersionByMatrixSize(matrix.length);
+    const eccLevel = this.getECLevel(this.getMaskedFormatBits(matrix));
+    const eccInfo = ECC_TABLE[version]?.[eccLevel as ECLevel];
+    const totalDataCodewords = eccInfo?.totalDataCodewords ?? 0;
+    const maxDataBits = totalDataCodewords * 8;
+
     let col = matrix.length - 1;
     let upwards = true;
 
@@ -153,15 +169,21 @@ export class QRDecoder {
       if (upwards) {
         for (let row = matrix.length - 1; row >= 0; row--) {
           for (const c of [right, left]) {
-            if (!this.isReserved(row, c, matrix))
-              positions.push({ row, col: c, value: matrix[row][c] });
+            if (!this.isReserved(row, c, matrix)) {
+              if (positions.length < maxDataBits) {
+                positions.push({ row, col: c, value: matrix[row][c] });
+              }
+            }
           }
         }
       } else {
         for (let row = 0; row < matrix.length; row++) {
           for (const c of [right, left]) {
-            if (!this.isReserved(row, c, matrix))
-              positions.push({ row, col: c, value: matrix[row][c] });
+            if (!this.isReserved(row, c, matrix)) {
+              if (positions.length < maxDataBits) {
+                positions.push({ row, col: c, value: matrix[row][c] });
+              }
+            }
           }
         }
       }
@@ -172,6 +194,65 @@ export class QRDecoder {
     }
 
     return positions;
+  }
+
+  detectECCPositions(matrix: number[][]) {
+    const dataPositions = this.detectDataPositions(matrix);
+    const version = this.getVersionByMatrixSize(matrix.length);
+    const eccLevel = this.getECLevel(this.getMaskedFormatBits(matrix));
+    const eccInfo = ECC_TABLE[version]?.[eccLevel as ECLevel];
+    const totalDataCodewords = eccInfo?.totalDataCodewords ?? 0;
+
+    const eccPositions = dataPositions.slice(totalDataCodewords * 8);
+
+    return eccPositions;
+  }
+
+  getECCDetail(matrix: number[][]) {
+    const version = this.getVersionByMatrixSize(matrix.length);
+    const eccLevel = this.getECLevel(this.getMaskedFormatBits(matrix));
+    const eccInfo = ECC_TABLE[version]?.[eccLevel as ECLevel];
+    const totalDataCodewords = eccInfo?.totalDataCodewords ?? 0;
+    const totalECCCodewords =
+      eccInfo ?
+        eccInfo.ecCodewordsPerBlock * (eccInfo.numBlocksGroup1 + eccInfo.numBlocksGroup2)
+      : 0;
+
+    const dataPositions = this.detectDataPositions(matrix);
+    const eccPositions = this.detectECCPositions(matrix);
+    const dataBits = dataPositions.map(({ value }) => value).join("");
+    const eccBits = eccPositions.map(({ value }) => value).join("");
+
+    const dataBytes = dataBits.match(/.{1,8}/g)?.map((byte) => parseInt(byte, 2) & 0xff) || [];
+    const dataCodewords = dataBytes.slice(0, totalDataCodewords);
+    const eccBytes = eccBits.match(/.{1,8}/g)?.map((byte) => parseInt(byte, 2) & 0xff) || [];
+
+    const allCodewords = [...dataCodewords, ...eccBytes];
+    const corrected = Int32Array.from(allCodewords);
+
+    let errorCount = 0;
+    let correctionSuccess = true;
+    try {
+      const decoder = new ReedSolomonDecoder(GenericGF.QR_CODE_FIELD_256);
+      decoder.decode(corrected, totalECCCodewords);
+      for (let i = 0; i < allCodewords.length; i++) {
+        if (allCodewords[i] !== corrected[i]) errorCount++;
+      }
+    } catch {
+      correctionSuccess = false;
+    }
+
+    const correctedDataCodewords = Array.from(corrected.slice(0, totalDataCodewords));
+    const correctedECCCodewords = Array.from(corrected.slice(totalDataCodewords));
+
+    return {
+      dataBits,
+      eccBits,
+      errorCount,
+      correctionSuccess,
+      correctedDataCodewords,
+      correctedECCCodewords,
+    };
   }
 
   isReserved(row: number, col: number, matrix: number[][]) {
@@ -214,33 +295,168 @@ export class QRDecoder {
     return false;
   }
 
-  getUnmaskedFormatBits(matrix: number[][]) {
+  getMaskedFormatBits(matrix: number[][]) {
     const formatPositions = this.detectFormatPositions(matrix);
-    const unmaskedFormatBits = formatPositions
+    const maskedFormatBits = formatPositions
       .map(({ value }) => value)
       .join("")
       .slice(0, 15);
-    return unmaskedFormatBits;
+    return maskedFormatBits;
   }
 
-  unmaskFormatBits(maskedFormatBits: string): string {
-    let result = "";
-    for (let i = 0; i < maskedFormatBits.length; i++) {
-      result += maskedFormatBits[i] === MASK_PATTERN[i] ? "0" : "1";
-    }
-    return result;
+  unmaskFormatBits(maskedFormatBits: string) {
+    return maskedFormatBits.split("").reduce((acc, curr, index) => {
+      return acc + (curr === MASK_PATTERN[index] ? "0" : "1");
+    }, "");
   }
 
-  getECLevel(formatBits: string): string {
+  getECLevel(formatBits: string) {
     const unmasked = this.unmaskFormatBits(formatBits);
     const ecBits = unmasked.slice(0, 2);
 
     return ECC_MAP[ecBits] ?? "Unknown";
   }
 
-  getMaskPattern(formatBits: string): number {
+  getMaskPattern(formatBits: string) {
     const unmasked = this.unmaskFormatBits(formatBits);
     const maskBits = unmasked.slice(2, 5);
     return parseInt(maskBits, 2);
+  }
+
+  unmaskDataBits(matrix: number[][]) {
+    const maskedFormatBits = this.getMaskedFormatBits(matrix);
+    const maskPattern = this.getMaskPattern(maskedFormatBits);
+    const dataPositions = this.detectDataPositions(matrix);
+    const dataMaskFn = DATA_MASK_PATTERNS[maskPattern];
+
+    const unmaskedDataBits = dataPositions
+      .map(({ row, col }) => {
+        const originalValue = matrix[row][col];
+        const shouldMask = dataMaskFn(row, col);
+        const maskedValue = shouldMask ? originalValue ^ 1 : originalValue;
+        return maskedValue;
+      })
+      .join("");
+
+    return unmaskedDataBits;
+  }
+
+  getErrorCorrectionInfo(matrix: number[][]) {
+    const maskedFormatBits = this.getMaskedFormatBits(matrix);
+    const ecLevel = this.getECLevel(maskedFormatBits);
+    const version = this.getVersionByMatrixSize(matrix.length);
+    const eccCorrectionInfo = ECC_TABLE[version]?.[ecLevel as ECLevel];
+    return eccCorrectionInfo;
+  }
+
+  decodeBitToText(matrix: number[][]) {
+    const unmaskedDataBits = this.unmaskDataBits(matrix);
+    const version = this.getVersionByMatrixSize(matrix.length);
+    const modeBits = unmaskedDataBits.slice(0, 4);
+    const mode = MODE_MAP[modeBits] || "(Unknown)";
+
+    const charCountBitsLen = CHARACTER_COUNT_BITS_MAP[mode]?.[version] || 0;
+    const countBits = unmaskedDataBits.slice(4, 4 + charCountBitsLen);
+    const characterCount = parseInt(countBits, 2);
+
+    const dataBitsStart = 4 + charCountBitsLen;
+    const dataBits = unmaskedDataBits.slice(dataBitsStart);
+
+    const decodeMap = {
+      Byte: (dataBits: string, characterCount: number) => {
+        const bytes = this.bitsToBytes(dataBits, characterCount);
+        return this.bytesToText(bytes);
+      },
+      Alphanumeric: (dataBits: string, characterCount: number) => {
+        return this.decodeAlphanumeric(dataBits, characterCount);
+      },
+      Numeric: (dataBits: string, characterCount: number) => {
+        return this.decodeNumeric(dataBits, characterCount);
+      },
+    };
+
+    const decodedText = decodeMap[mode as keyof typeof decodeMap](dataBits, characterCount);
+    return decodedText;
+  }
+
+  private decodeAlphanumeric(dataBits: string, characterCount: number): string {
+    let pointer = 0;
+    let result = "";
+
+    while (characterCount >= 2) {
+      const bits11 = dataBits.slice(pointer, pointer + 11);
+      if (bits11.length < 11) break;
+
+      const value = parseInt(bits11, 2);
+      const firstCharIndex = Math.floor(value / 45);
+      const secondCharIndex = value % 45;
+
+      result += ALPHANUMERIC_TABLE[firstCharIndex];
+      result += ALPHANUMERIC_TABLE[secondCharIndex];
+
+      pointer += 11;
+      characterCount -= 2;
+    }
+
+    if (characterCount === 1) {
+      const bits6 = dataBits.slice(pointer, pointer + 6);
+      const value = parseInt(bits6, 2);
+      result += ALPHANUMERIC_TABLE[value];
+    }
+
+    return result;
+  }
+
+  private decodeNumeric(dataBits: string, characterCount: number): string {
+    let pointer = 0;
+    let result = "";
+    let remaining = characterCount;
+    while (remaining > 0) {
+      if (remaining >= 3) {
+        const bits10 = dataBits.slice(pointer, pointer + 10);
+        if (bits10.length < 10) break;
+        const value = parseInt(bits10, 2).toString().padStart(3, "0");
+        result += value;
+        pointer += 10;
+        remaining -= 3;
+      } else if (remaining === 2) {
+        const bits7 = dataBits.slice(pointer, pointer + 7);
+        if (bits7.length < 7) break;
+        const value = parseInt(bits7, 2).toString().padStart(2, "0");
+        result += value;
+        pointer += 7;
+        remaining -= 2;
+      } else if (remaining === 1) {
+        const bits4 = dataBits.slice(pointer, pointer + 4);
+        if (bits4.length < 4) break;
+        const value = parseInt(bits4, 2).toString();
+        result += value;
+        pointer += 4;
+        remaining -= 1;
+      }
+    }
+    return result;
+  }
+
+  private bitsToBytes(bits: string, characterCount: number): number[] {
+    const bytes = [];
+    for (let i = 0; i < characterCount; i++) {
+      const byteBits = bits.slice(i * 8, i * 8 + 8);
+      if (byteBits.length < 8) break;
+      bytes.push(parseInt(byteBits, 2));
+    }
+    return bytes;
+  }
+
+  private bytesToText(bytes: number[]): string {
+    try {
+      return new TextDecoder("utf-8").decode(new Uint8Array(bytes));
+    } catch {
+      try {
+        return new TextDecoder("iso-8859-1").decode(new Uint8Array(bytes));
+      } catch {
+        return String.fromCharCode(...bytes);
+      }
+    }
   }
 }
