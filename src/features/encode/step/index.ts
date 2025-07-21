@@ -1,10 +1,11 @@
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
 import AnalyzeDetail from "@/features/encode/components/details/AnalyzeDetail";
 import BuildMatrixDetail from "@/features/encode/components/details/BuildMatrixDetail";
 import EccDetail from "@/features/encode/components/details/EccDetail";
 import EncodeDataDetail from "@/features/encode/components/details/EncodeDataDetail";
 import MaskDetail from "@/features/encode/components/details/MaskDetail";
+import { qr } from "@/libs/QR";
 
 export const ENCODE_STEPS = [
   {
@@ -44,11 +45,18 @@ export const ENCODE_STEPS = [
     title: "QR 매트릭스 생성",
     description: "패턴과 데이터를 배치하여 최종 QR 매트릭스를 생성합니다.",
     color: "purple",
-    maskFn: (encodeInfo: QREncoderResult) => {
-      if (encodeInfo.basePattern) {
-        return encodeInfo.basePattern;
-      }
-      return [];
+    maskFn: (inputValue: string, errorCorrectionLevel: ErrorCorrectionLevel) => {
+      const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+
+      const bitStream = qr.qrEncoder.buildBitStream(inputValue, errorCorrectionLevel);
+      const eccResult = qr.qrEncoder.generateECC(bitStream, smallestVersion, errorCorrectionLevel);
+      const basePattern = qr.qrEncoder.getBasePattern(
+        bitStream,
+        eccResult,
+        errorCorrectionLevel,
+        smallestVersion,
+      );
+      return basePattern;
     },
     stepDetailComponent: BuildMatrixDetail,
   },
@@ -57,11 +65,23 @@ export const ENCODE_STEPS = [
     title: "마스킹 적용",
     description: "QR 매트릭스에 최적의 마스크 패턴을 적용합니다.",
     color: "orange",
-    maskFn: (encodeInfo: QREncoderResult) => {
-      if (encodeInfo.maskedMatrixPositions) {
-        return encodeInfo.maskedMatrixPositions;
-      }
-      return [];
+    maskFn: (inputValue: string, errorCorrectionLevel: ErrorCorrectionLevel) => {
+      const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+      const bitStream = qr.qrEncoder.buildBitStream(inputValue, errorCorrectionLevel);
+      const eccResult = qr.qrEncoder.generateECC(bitStream, smallestVersion, errorCorrectionLevel);
+      const basePattern = qr.qrEncoder.getBasePattern(
+        bitStream,
+        eccResult,
+        errorCorrectionLevel,
+        smallestVersion,
+      );
+      const { maskedMatrixPositions } = qr.qrEncoder.getMaskedMatrixPositions(
+        basePattern,
+        bitStream,
+        errorCorrectionLevel,
+        smallestVersion,
+      );
+      return maskedMatrixPositions;
     },
     stepDetailComponent: MaskDetail,
   },
@@ -70,11 +90,23 @@ export const ENCODE_STEPS = [
     title: "format 생성 및 최종 QR 코드",
     description: "format 패턴을 적용하고 QR 코드 이미지를 렌더링합니다.",
     color: "emerald",
-    maskFn: (encodeInfo: QREncoderResult) => {
-      if (encodeInfo.formatPosition) {
-        return encodeInfo.formatPosition;
-      }
-      return [];
+    maskFn: (inputValue: string, errorCorrectionLevel: ErrorCorrectionLevel) => {
+      const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+      const bitStream = qr.qrEncoder.buildBitStream(inputValue, errorCorrectionLevel);
+      const eccResult = qr.qrEncoder.generateECC(bitStream, smallestVersion, errorCorrectionLevel);
+      const basePattern = qr.qrEncoder.getBasePattern(
+        bitStream,
+        eccResult,
+        errorCorrectionLevel,
+        smallestVersion,
+      );
+      const { formatPosition } = qr.qrEncoder.getMaskedMatrixPositions(
+        basePattern,
+        bitStream,
+        errorCorrectionLevel,
+        smallestVersion,
+      );
+      return formatPosition;
     },
     stepDetailComponent: undefined,
   },

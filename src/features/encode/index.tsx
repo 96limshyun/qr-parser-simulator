@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import type { EncodeStep } from "@/features/encode/types/encodeStep";
 import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
@@ -8,7 +8,7 @@ import QrEncoderInput from "@/features/encode/components/QrEncoderInput";
 import QrMatrixPlayer from "@/features/encode/components/QrMatrixPlayer";
 import StepDetailCard from "@/features/encode/components/StepDetailCard";
 import { DEFAULT_ENCODE_MATRIX } from "@/features/encode/constants/defaultEncodeMatrix";
-import { QREncoder } from "@/libs/QREncoder";
+import { qr } from "@/libs/QR";
 
 const Encode = () => {
   const [matrix, setMatrix] = useState<number[][]>(DEFAULT_ENCODE_MATRIX);
@@ -17,23 +17,17 @@ const Encode = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [errorCorrectionLevel, setErrorCorrectionLevel] = useState<ErrorCorrectionLevel>("L");
 
-  const encoder = useMemo(
-    () => new QREncoder(inputValue, errorCorrectionLevel),
-    [inputValue, errorCorrectionLevel],
-  );
-  const encodeInfo = useMemo(() => encoder.encode(), [encoder]);
-
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
   };
   useEffect(() => {
-    const { smallestVersion } = encoder.encode();
+    const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
     setMatrix(
       Array.from({ length: smallestVersion * 4 + 17 }, () =>
         Array.from({ length: smallestVersion * 4 + 17 }, () => 0),
       ),
     );
-  }, [encoder, inputValue]);
+  }, [inputValue, errorCorrectionLevel]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
@@ -45,11 +39,13 @@ const Encode = () => {
           setIsPlaying={setIsPlaying}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-          encodeInfo={encodeInfo}
+          inputValue={inputValue}
+          errorCorrectionLevel={errorCorrectionLevel}
         />
         <StepDetailCard
           currentStep={currentStep}
-          encodeInfo={encodeInfo}
+          inputValue={inputValue}
+          errorCorrectionLevel={errorCorrectionLevel}
         />
       </div>
       <div className="gap-2 flex flex-col">

@@ -1,5 +1,5 @@
 import { QRDecoder } from "@/libs/QRDecoder";
-import { QREncoder } from "@/libs/QREncoder/QREncoder";
+import { QREncoder } from "@/libs/QREncoder";
 
 class QR {
   public qrDecoder: QRDecoder;

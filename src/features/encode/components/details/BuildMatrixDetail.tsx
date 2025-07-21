@@ -1,13 +1,23 @@
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
+import { qr } from "@/libs/QR";
 import Text from "@/ui/Text";
 
 interface BuildMatrixDetailProps {
-  encodeInfo: QREncoderResult;
+  inputValue: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
 }
 
-const BuildMatrixDetail = ({ encodeInfo }: BuildMatrixDetailProps) => {
-  const { basePattern, smallestVersion, text } = encodeInfo;
+const BuildMatrixDetail = ({ inputValue, errorCorrectionLevel }: BuildMatrixDetailProps) => {
+  const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+  const bitStream = qr.qrEncoder.buildBitStream(inputValue, errorCorrectionLevel);
+  const eccResult = qr.qrEncoder.generateECC(bitStream, smallestVersion, errorCorrectionLevel);
+  const basePattern = qr.qrEncoder.getBasePattern(
+    bitStream,
+    eccResult,
+    errorCorrectionLevel,
+    smallestVersion,
+  );
   const matrixSize = smallestVersion * 4 + 17;
 
   const finderPatternCount = 147;
@@ -242,9 +252,21 @@ const BuildMatrixDetail = ({ encodeInfo }: BuildMatrixDetailProps) => {
           </Text>
           <Text>총 모듈 수: {matrixSize * matrixSize}개</Text>
           <Text>
-            데이터 모듈 비율: {((dataModules.length / (matrixSize * matrixSize)) * 100).toFixed(1)}%
+            데이터 모듈 비율:{" "}
+            {(
+              ((matrixSize * matrixSize
+                - (dataModules.length
+                  + finderPattern.length
+                  + alignmentPattern.length
+                  + timingPattern.length
+                  + darkModule.length
+                  + formatInformation.length))
+                / (matrixSize * matrixSize))
+              * 100
+            ).toFixed(1)}
+            %
           </Text>
-          <Text>입력 데이터: "{text || "(빈 입력)"}"</Text>
+          <Text>입력 데이터: "{inputValue || "(빈 입력)"}"</Text>
         </div>
       </div>
 

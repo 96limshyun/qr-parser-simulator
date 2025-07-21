@@ -1,12 +1,23 @@
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel, Mode } from "@/types/versionCapacityTableType";
 
+import { qr } from "@/libs/QR";
 import Text from "@/ui/Text";
 
 interface AnalyzeDetailProps {
-  encodeInfo: QREncoderResult;
+  inputValue: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
 }
 
-const AnalyzeDetail = ({ encodeInfo }: AnalyzeDetailProps) => {
+const AnalyzeDetail = ({ inputValue, errorCorrectionLevel }: AnalyzeDetailProps) => {
+  const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+  const mode = qr.qrEncoder.getMode(inputValue);
+  const modeIndicatorBits = mode.modeIndicatorBits;
+  const charCountBitLength = qr.qrEncoder.getCharCountBitLength(
+    smallestVersion,
+    mode.mode as Mode,
+    inputValue,
+  );
+
   return (
     <div className="space-y-3 text-sm leading-relaxed">
       <div className="flex gap-2">
@@ -16,7 +27,7 @@ const AnalyzeDetail = ({ encodeInfo }: AnalyzeDetailProps) => {
         >
           입력 값:
         </Text>
-        <Text color="black">{encodeInfo.text || "(빈 입력)"}</Text>
+        <Text color="black">{inputValue || "(빈 입력)"}</Text>
       </div>
       <div className="flex gap-2">
         <Text
@@ -25,7 +36,7 @@ const AnalyzeDetail = ({ encodeInfo }: AnalyzeDetailProps) => {
         >
           모드:
         </Text>
-        <Text color="black">{encodeInfo.mode}</Text>
+        <Text color="black">{mode.mode}</Text>
       </div>
 
       <div className="flex gap-2">
@@ -35,17 +46,7 @@ const AnalyzeDetail = ({ encodeInfo }: AnalyzeDetailProps) => {
         >
           모드 인디케이터 비트:
         </Text>
-        <Text>{encodeInfo.modeIndicatorBits}</Text>
-      </div>
-
-      <div className="flex gap-2">
-        <Text
-          color="gray"
-          fontWeight="medium"
-        >
-          모드 인디케이터 비트:
-        </Text>
-        <Text fontFamily="mono">{encodeInfo.modeIndicatorBits}</Text>
+        <Text>{modeIndicatorBits}</Text>
       </div>
 
       <div className="flex gap-2">
@@ -55,7 +56,7 @@ const AnalyzeDetail = ({ encodeInfo }: AnalyzeDetailProps) => {
         >
           데이터 길이:
         </Text>
-        <Text color="black">{encodeInfo.length} 글자</Text>
+        <Text color="black">{parseInt(charCountBitLength, 2)} 글자</Text>
       </div>
 
       <div className="mt-4 space-y-2">

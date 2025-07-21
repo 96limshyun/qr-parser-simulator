@@ -1,5 +1,5 @@
 import type { EncodeStep } from "@/features/encode/types/encodeStep";
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
 import { ENCODE_STEPS } from "@/features/encode/step";
 import Card from "@/ui/Card";
@@ -8,10 +8,11 @@ import Text from "@/ui/Text";
 
 interface StepDetailCardProps {
   currentStep: EncodeStep;
-  encodeInfo: QREncoderResult;
+  inputValue: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
 }
 
-const StepDetailCard = ({ currentStep, encodeInfo }: StepDetailCardProps) => {
+const StepDetailCard = ({ currentStep, inputValue, errorCorrectionLevel }: StepDetailCardProps) => {
   const stepConfig = ENCODE_STEPS.find((s) => s.step === currentStep);
 
   if (!stepConfig) return null;
@@ -35,7 +36,10 @@ const StepDetailCard = ({ currentStep, encodeInfo }: StepDetailCardProps) => {
         </Text>
       </div>
       {Detail ?
-        <Detail encodeInfo={encodeInfo} />
+        <Detail
+          inputValue={inputValue}
+          errorCorrectionLevel={errorCorrectionLevel}
+        />
       : <Text color="gray">{description}</Text>}
     </Card>
   );

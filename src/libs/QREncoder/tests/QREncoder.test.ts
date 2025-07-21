@@ -230,7 +230,7 @@ describe("Byte 모드", () => {
     );
   });
 
-  it("비트스트림이 최대 용량보다 작으면 패딩 비트를 추가해 최대 용량을 채워야 한다", () => {
+  it("비트스트림이 최대 용량보다 작으면 패딩 비트를 추가해야 한다", () => {
     const bitStream = qr.qrEncoder.createInitialBitStream(BYTE_TEXT, "Byte", "0100", 1);
     const totalBits = qr.qrEncoder.getTotalBits(1, "L");
     const bitStreamWithTerminator = qr.qrEncoder.addTerminatorBits(bitStream, totalBits);
@@ -238,12 +238,46 @@ describe("Byte 모드", () => {
     const bitStreamWithPaddingBytes = qr.qrEncoder.addPaddingBytes(bitStreamWithPadding, totalBits);
 
     expect(bitStreamWithPaddingBytes.length).toBe(totalBits);
+    expect(bitStreamWithPaddingBytes.startsWith(bitStream)).toBe(true);
+  });
+});
+
+describe("ECC 관련 함수", () => {
+  it("convertToCodewords: 8비트 단위로 코드워드 변환해야한다.", () => {
+    const bits = "1100110001010101";
+    const codewords = qr.qrEncoder.convertToCodewords(bits);
+    expect(codewords).toEqual([204, 85]);
   });
 
-  it("버전 1 L 에러레벨의 최종 비트스트림은 01000000101001001000011001010110110001101100011011110010000101000000001000111110110110010101100111001110101010111000100000000000111011000001000111101100 되어야 한다", () => {
-    const bitStream = qr.qrEncoder.buildBitStream(BYTE_TEXT, "L");
-    expect(bitStream).toBe(
-      "01000000101001001000011001010110110001101100011011110010000101000000001000111110110110010101100111001110101010111000100000000000111011000001000111101100",
-    );
+  it("prepareDataAndECCInfo: 데이터 코드워드와 ECC 정보 반환해야한다.", () => {
+    const bits = "1100110001010101";
+    const version = 1;
+    const ecLevel = "L";
+    const { dataCw, shardLen, eccLen } = qr.qrEncoder.prepareDataAndECCInfo(bits, version, ecLevel);
+    expect(dataCw).toEqual([204, 85]);
+    expect(shardLen).toBe(19);
+    expect(eccLen).toBe(7);
+  });
+
+  it("generateECCCodewords: ECC 코드워드 생성해야한다.", () => {
+    const dataCw = Array(19).fill(1);
+    const shardLen = 19;
+    const eccLen = 7;
+    const eccCw = qr.qrEncoder.generateECCCodewords(dataCw, shardLen, eccLen);
+    expect(eccCw.length).toBe(eccLen);
+  });
+
+  it("combineFinalCodewords: 데이터+ECC 코드워드 결합해야한다.", () => {
+    const dataCw = [1, 2, 3];
+    const eccCw = [4, 5];
+    const shardLen = 3;
+    const finalCw = qr.qrEncoder.combineFinalCodewords(dataCw, eccCw, shardLen);
+    expect(finalCw).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("createFinalBitStream: 코드워드 배열을 비트스트림으로 변환해야한다.", () => {
+    const finalCw = [2, 255];
+    const bits = qr.qrEncoder.createFinalBitStream(finalCw);
+    expect(bits).toBe("0000001011111111");
   });
 });

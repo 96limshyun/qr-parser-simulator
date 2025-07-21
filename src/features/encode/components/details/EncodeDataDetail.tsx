@@ -1,13 +1,23 @@
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel, Mode } from "@/types/versionCapacityTableType";
 
+import { qr } from "@/libs/QR";
 import Text from "@/ui/Text";
 
 interface EncodeDataDetailProps {
-  encodeInfo: QREncoderResult;
+  inputValue: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
 }
 
-const EncodeDataDetail = ({ encodeInfo }: EncodeDataDetailProps) => {
-  const { mode, length, errorCorrectionLevel, text, smallestVersion, bitStream } = encodeInfo;
+const EncodeDataDetail = ({ inputValue, errorCorrectionLevel }: EncodeDataDetailProps) => {
+  const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+  const bitStream = qr.qrEncoder.buildBitStream(inputValue, errorCorrectionLevel);
+  const mode = qr.qrEncoder.getMode(inputValue);
+  const charCountBitLength = qr.qrEncoder.getCharCountBitLength(
+    smallestVersion,
+    mode.mode as Mode,
+    inputValue,
+  );
+  const length = parseInt(charCountBitLength, 2);
 
   return (
     <div className="space-y-4 text-sm leading-relaxed">
@@ -42,9 +52,9 @@ const EncodeDataDetail = ({ encodeInfo }: EncodeDataDetailProps) => {
         ✨ 내 데이터 분석 결과
       </Text>
       <div className="space-y-1">
-        <Text>입력한 데이터: {text || "(빈 입력)"}</Text>
+        <Text>입력한 데이터: {inputValue || "(빈 입력)"}</Text>
         <Text>데이터 길이: {length}글자</Text>
-        <Text>인코딩 모드: {mode}</Text>
+        <Text>인코딩 모드: {mode.mode}</Text>
         <Text>오류 정정 레벨: {errorCorrectionLevel}</Text>
         {smallestVersion ?
           <Text
