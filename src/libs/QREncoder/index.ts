@@ -75,7 +75,6 @@ export class QREncoder {
       Numeric: [10, 12, 14],
       Alphanumeric: [9, 11, 13],
       Byte: [8, 16, 16],
-      Kanji: [8, 10, 12],
     };
     const idx =
       version <= 9 ? 0
