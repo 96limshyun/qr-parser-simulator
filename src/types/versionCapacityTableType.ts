@@ -1,5 +1,5 @@
 export type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
-export type Mode = "Numeric" | "Alphanumeric" | "Byte" | "Kanji";
+export type Mode = "Numeric" | "Alphanumeric" | "Byte";
 
 export type VersionCapacityTableType = {
   [version: number]: {

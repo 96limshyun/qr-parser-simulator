@@ -4,7 +4,7 @@ import { FiPlay } from "react-icons/fi";
 import { RiResetLeftFill } from "react-icons/ri";
 
 import type { EncodeStep } from "@/features/encode/types/encodeStep";
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
 import { SPEED_OPTIONS } from "@/constants/simulationSpeed";
 import { DEFAULT_ENCODE_MATRIX } from "@/features/encode/constants/defaultEncodeMatrix";
@@ -21,7 +21,8 @@ interface QrMatrixPlayerProps {
   setCurrentStep: Dispatch<SetStateAction<EncodeStep>>;
   isPlaying: boolean;
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
-  encodeInfo: QREncoderResult;
+  inputValue: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
 }
 
 const QrMatrixPlayer = ({
@@ -31,7 +32,8 @@ const QrMatrixPlayer = ({
   setCurrentStep,
   isPlaying,
   setIsPlaying,
-  encodeInfo,
+  inputValue,
+  errorCorrectionLevel,
 }: QrMatrixPlayerProps) => {
   const [animationSpeed, setAnimationSpeed] = useState(2000);
   const [isShowBorder, setIsShowBorder] = useState(false);
@@ -41,8 +43,8 @@ const QrMatrixPlayer = ({
   const { maskFn } = ENCODE_STEPS.find((s) => s.step === currentStep) ?? {};
 
   const position = useMemo(() => {
-    return maskFn ? maskFn(encodeInfo) : [];
-  }, [maskFn, encodeInfo]);
+    return maskFn ? maskFn(inputValue, errorCorrectionLevel) : [];
+  }, [maskFn, inputValue, errorCorrectionLevel]);
 
   useCellAnimation({
     animationSpeed,

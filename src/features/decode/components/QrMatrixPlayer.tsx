@@ -9,7 +9,6 @@ import { COLOR_MAP } from "@/constants/colorMap";
 import { SPEED_OPTIONS } from "@/constants/simulationSpeed";
 import useCellAnimation from "@/features/decode/hooks/useCellAnimation";
 import { DECODE_STEPS } from "@/features/decode/step";
-import { QRDecoder } from "@/libs/QRDecoder";
 import Button from "@/ui/Button";
 import Card from "@/ui/Card";
 import Text from "@/ui/Text";
@@ -20,7 +19,6 @@ interface QrMatrixPlayerProps {
   setCurrentStep: Dispatch<SetStateAction<DecodeStep>>;
   isPlaying: boolean;
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
-  qrDecoder: QRDecoder;
 }
 
 const QrMatrixPlayer = ({
@@ -29,7 +27,6 @@ const QrMatrixPlayer = ({
   setCurrentStep,
   isPlaying,
   setIsPlaying,
-  qrDecoder,
 }: QrMatrixPlayerProps) => {
   const [animationSpeed, setAnimationSpeed] = useState(2000);
   const [isShowBorder, setIsShowBorder] = useState(false);
@@ -40,8 +37,8 @@ const QrMatrixPlayer = ({
   const highlightColor = COLOR_MAP[color!];
 
   const position = useMemo(() => {
-    return maskFn ? maskFn(qrDecoder) : [];
-  }, [maskFn, qrDecoder]);
+    return maskFn ? maskFn(matrix) : [];
+  }, [maskFn, matrix]);
 
   const { filledCells, setFilledCells } = useCellAnimation({ animationSpeed, position, matrix });
 

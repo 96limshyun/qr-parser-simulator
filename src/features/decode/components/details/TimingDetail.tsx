@@ -2,13 +2,14 @@ import { LiaRulerHorizontalSolid, LiaRulerVerticalSolid } from "react-icons/lia"
 
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
+import { qr } from "@/libs/QR";
 import Text from "@/ui/Text";
 
-const TimingDetail = ({ qrDecoder }: DetailProps) => {
-  const positions = qrDecoder.detectTimingPositions();
+const TimingDetail = ({ matrix }: DetailProps) => {
+  const positions = qr.qrDecoder.detectTimingPositions(matrix);
 
-  const horizontalTiming = positions.filter((pos) => pos.row === 6);
-  const verticalTiming = positions.filter((pos) => pos.col === 6);
+  const horizontalTiming = positions.filter(({ row }) => row === 6);
+  const verticalTiming = positions.filter(({ col }) => col === 6);
 
   return (
     <div className="space-y-1 text-sm leading-6">

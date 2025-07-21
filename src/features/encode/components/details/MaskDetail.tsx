@@ -1,9 +1,11 @@
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
+import { qr } from "@/libs/QR";
 import Text from "@/ui/Text";
 
 interface MaskDetailProps {
-  encodeInfo: QREncoderResult;
+  inputValue: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
 }
 
 const MASK_PATTERNS = [
@@ -49,9 +51,24 @@ const MASK_PATTERNS = [
   },
 ];
 
-const MaskDetail = ({ encodeInfo }: MaskDetailProps) => {
-  const maskPatternIdx = encodeInfo.maskNumber;
-  const maskPattern = MASK_PATTERNS[maskPatternIdx];
+const MaskDetail = ({ inputValue, errorCorrectionLevel }: MaskDetailProps) => {
+  const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+  const bitStream = qr.qrEncoder.buildBitStream(inputValue, errorCorrectionLevel);
+  const eccResult = qr.qrEncoder.generateECC(bitStream, smallestVersion, errorCorrectionLevel);
+  const basePattern = qr.qrEncoder.getBasePattern(
+    bitStream,
+    eccResult,
+    errorCorrectionLevel,
+    smallestVersion,
+  );
+  const { maskedMatrixPositions, maskNumber } = qr.qrEncoder.getMaskedMatrixPositions(
+    basePattern,
+    bitStream,
+    errorCorrectionLevel,
+    smallestVersion,
+  );
+
+  const maskPattern = MASK_PATTERNS[maskNumber];
 
   return (
     <div className="space-y-4 text-sm leading-relaxed">
@@ -80,15 +97,13 @@ const MaskDetail = ({ encodeInfo }: MaskDetailProps) => {
         <div>
           <Text fontWeight="medium">마스킹 전</Text>
           <div className="border p-2 rounded text-xs">
-            {encodeInfo.basePattern ? `활성 모듈 수: ${encodeInfo.basePattern.length}` : "-"}
+            {basePattern ? `활성 모듈 수: ${basePattern.length}` : "-"}
           </div>
         </div>
         <div>
           <Text fontWeight="medium">마스킹 후</Text>
           <div className="border p-2 rounded text-xs">
-            {encodeInfo.maskedMatrixPositions ?
-              `활성 모듈 수: ${encodeInfo.maskedMatrixPositions.length}`
-            : "-"}
+            {maskedMatrixPositions ? `활성 모듈 수: ${maskedMatrixPositions.length}` : "-"}
           </div>
         </div>
       </div>

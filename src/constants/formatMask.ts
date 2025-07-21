@@ -40,3 +40,5 @@ export const FORMAT_INFORMATION_STRINGS = {
     7: 0b000100000111011,
   },
 } as const;
+
+export const MASK_PATTERN = "101010000010010";

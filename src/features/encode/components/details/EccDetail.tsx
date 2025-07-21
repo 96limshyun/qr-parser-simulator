@@ -1,16 +1,19 @@
-import type { QREncoderResult } from "@/libs/QREncoder/types/QREncoderResult";
+import type { ErrorCorrectionLevel } from "@/types/versionCapacityTableType";
 
-const EccDetail = ({ encodeInfo }: { encodeInfo: QREncoderResult }) => {
-  const {
-    bitStream,
-    dataCodewords = [],
-    eccCodewords = [],
-    finalCodewords = [],
-    finalBits = "",
-    smallestVersion = 1,
-  } = encodeInfo;
+import { qr } from "@/libs/QR";
 
-  const ecLevel = (encodeInfo.errorCorrectionLevel?.split(" ")[0] ?? "Q") as string;
+const EccDetail = ({
+  inputValue,
+  errorCorrectionLevel,
+}: {
+  inputValue: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
+}) => {
+  const smallestVersion = qr.qrEncoder.getSmallestVersion(inputValue, errorCorrectionLevel);
+  const bitStream = qr.qrEncoder.buildBitStream(inputValue, errorCorrectionLevel);
+  const eccResult = qr.qrEncoder.generateECC(bitStream, smallestVersion, errorCorrectionLevel);
+  const { dataCodewords, eccCodewords, finalCodewords, finalBits } = eccResult;
+  const ecLevel = errorCorrectionLevel.split(" ")[0] as ErrorCorrectionLevel;
   const shardLen = dataCodewords.length;
   const eccLen = eccCodewords.length;
 

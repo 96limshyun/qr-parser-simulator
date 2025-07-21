@@ -1,14 +1,18 @@
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
+import { MODE_MAP } from "@/constants/modeMap";
+import { qr } from "@/libs/QR";
+import Card from "@/ui/Card";
 import Text from "@/ui/Text";
 
-const QrResultDetail = ({ qrDecodeResult }: DetailProps) => {
-  const bitsStr = qrDecodeResult.unmaskedDataBits;
-  const decodedBytesStr =
-    qrDecodeResult.eccCorrected && qrDecodeResult.eccCorrected.length > 0 ?
-      qrDecodeResult.eccCorrected.join(", ")
-    : "(없음)";
-  const decodedText = qrDecodeResult.decodedText || "(없음)";
+const QrResultDetail = ({ matrix }: DetailProps) => {
+  const decodedText = qr.qrDecoder.decodeBitToText(matrix);
+  const version = qr.qrDecoder.getVersionByMatrixSize(matrix.length);
+  const formatBits = qr.qrDecoder.getMaskedFormatBits(matrix);
+  const maskPattern = qr.qrDecoder.getMaskPattern(formatBits);
+  const eccLevel = qr.qrDecoder.getECLevel(formatBits);
+  const dataBits = qr.qrDecoder.unmaskDataBits(matrix);
+  const mode = MODE_MAP[dataBits.slice(0, 4)];
 
   return (
     <div className="space-y-4 text-sm leading-6">
@@ -20,59 +24,23 @@ const QrResultDetail = ({ qrDecodeResult }: DetailProps) => {
         Alignment 등 기능 패턴 영역을 제외한 모듈들만 데이터로 사용됩니다.
       </Text>
 
-      <Text
-        fontWeight="bold"
-        fontSize="sm"
-        className="mt-2"
+      <Card
+        tone="subtle"
+        padding="sm"
+        className="max-h-48 overflow-y-auto"
       >
-        추출된 데이터 비트:
-      </Text>
-      <div className="bg-gray-800 text-white font-mono p-2 rounded text-xs break-all">
-        {bitsStr || "(데이터 없음)"}
-      </div>
-      <Text
-        color="gray"
-        className="mt-2"
-      >
-        총 비트 길이: {bitsStr?.length || 0} bits
-      </Text>
+        <div className="bg-gray-800 text-white font-mono p-2 rounded text-xs break-all">
+          {dataBits || "(데이터 없음)"}
+        </div>
+      </Card>
 
-      <Text
-        fontWeight="bold"
-        fontSize="sm"
-        className="mt-4"
-      >
-        ECC 정정 후 데이터 코드워드 (10진수):
-      </Text>
-      <div className="bg-gray-800 text-white font-mono p-2 rounded text-xs break-all">
-        {decodedBytesStr}
-      </div>
-      <Text color="gray">총 코드워드 수: {qrDecodeResult.eccCorrected?.length || 0} 개</Text>
-
-      <Text
-        fontWeight="bold"
-        fontSize="sm"
-        className="mt-4"
-      >
-        디코딩된 텍스트:
-      </Text>
-      <div className="bg-gray-800 text-white font-mono p-2 rounded text-xs break-all">
-        {decodedText}
-      </div>
-
-      <div className="mt-4 space-y-1">
-        <Text color="gray">Version: {qrDecodeResult.version}</Text>
-        <Text color="gray">Mask Pattern: {qrDecodeResult.maskPattern}</Text>
-        <Text color="gray">ECC Level: {qrDecodeResult.eccLevel}</Text>
-        <Text color="gray">모드 비트: {qrDecodeResult.modeBits || "(없음)"}</Text>
-        <Text color="gray">모드: {qrDecodeResult.mode || "(미확인)"}</Text>
-        <Text color="gray">
-          총 글자 수 (Character Count): {qrDecodeResult.characterCount ?? "(미확인)"}
-        </Text>
-        <Text color="gray">Format Raw Bits: {qrDecodeResult.rawFormatBits || "(없음)"}</Text>
-        <Text color="gray">
-          Format Unmasked Bits: {qrDecodeResult.unmaskedFormatBits || "(없음)"}
-        </Text>
+      <div className="mt-2 space-y-1">
+        <Text color="gray">버전: {version}</Text>
+        <Text color="gray">포맷 비트: {formatBits}</Text>
+        <Text color="gray">마스크 패턴: {maskPattern}</Text>
+        <Text color="gray">에러 정정 레벨: {eccLevel}</Text>
+        <Text color="gray">모드: {mode}</Text>
+        <Text color="green">디코딩된 텍스트: {decodedText}</Text>
       </div>
     </div>
   );

@@ -2,11 +2,13 @@ import { LiaEyeSolid, LiaCrossSolid } from "react-icons/lia";
 
 import type { DetailProps } from "@/features/decode/types/detailProps";
 
+import { qr } from "@/libs/QR";
+import Card from "@/ui/Card";
 import Text from "@/ui/Text";
 
-const FinderDetail = ({ qrDecoder }: DetailProps) => {
-  const finderPositions = qrDecoder.detectFinderPositions();
-  const alignmentPositions = qrDecoder.detectAlignmentPositions();
+const FinderDetail = ({ matrix }: DetailProps) => {
+  const finderPositions = qr.qrDecoder.detectFinderPositions(matrix);
+  const alignmentPositions = qr.qrDecoder.detectAlignmentPositions(matrix);
 
   const finderLabel = (i: number) => ["좌측 상단", "우측 상단", "좌측 하단"][i] ?? `패턴 ${i + 1}`;
 
@@ -27,21 +29,27 @@ const FinderDetail = ({ qrDecoder }: DetailProps) => {
       >
         검출된 위치 패턴:
       </Text>
-      <div>
-        {finderPositions.map(({ rowStart, colStart }, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2"
-          >
-            <LiaEyeSolid />
-            {finderLabel(i)} (
-            <span className="font-mono">
-              {rowStart}, {colStart}
-            </span>
-            )
-          </div>
-        ))}
-      </div>
+      <Card
+        tone="subtle"
+        padding="sm"
+        className="max-h-48 overflow-y-auto w-full mt-4"
+      >
+        <div className="space-y-1">
+          {finderPositions.map(({ row, col }, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2"
+            >
+              <LiaEyeSolid />
+              {finderLabel(i)} (
+              <span className="font-mono">
+                {row}, {col}
+              </span>
+              )
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {alignmentPositions.length > 0 && (
         <>

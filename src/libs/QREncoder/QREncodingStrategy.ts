@@ -44,7 +44,7 @@ export class QREncodingStrategy {
     }
     return bits;
   }
-
+  // 123 456 789 0
   /**
    * 바이트 문자열을 인코딩합니다.
    * @param data - 인코딩할 문자열
