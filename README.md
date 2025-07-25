@@ -147,17 +147,13 @@ QR 코드는 **4가지 에러 정정 레벨**을 제공합니다. 각 레벨은 
 
 4비트로 인코딩 모드를 표시합니다.
 
-```
 모드 인디케이터 비트:
-┌─────────────┬─────────┬─────────────┬─────────────┐
-│    모드     │   비트  │    예시     │   압축률    │
-├─────────────┼─────────┼─────────────┼─────────────┤
-│  Numeric    │  0001   │ "1234567890"│    최고    │
-│Alphanumeric │  0010   │"HELLO WORLD"│    높음    │
-│    Byte     │  0100   │ "Hello!@#"  │    보통    │
-│   Kanji     │  1000   │   "漢字"    │    높음    │
-└─────────────┴─────────┴─────────────┴─────────────┘
-```
+| 모드           | 비트   | 예시           | 압축률 |
+|----------------|--------|----------------|--------|
+| Numeric        | 0001   | "1234567890"   | 최고   |
+| Alphanumeric   | 0010   | "HELLO WORLD"  | 높음   |
+| Byte           | 0100   | "Hello!@#"     | 보통   |
+| Kanji          | 1000   | "漢字"         | 높음   |
 
 ### 📏 2-3단계: 문자 수 인디케이터 추가
 
@@ -187,7 +183,7 @@ QR 코드는 **4가지 에러 정정 레벨**을 제공합니다. 각 레벨은 
 
 #### 📝 모드별 인코딩 방식
 
-**Numeric 모드 (3자씩 묶음):**
+**Numeric 모드 (3자씩 묶음):** [Numeric 모드 인코딩](https://www.thonky.com/qr-code-tutorial/numeric-mode-encoding)
 
 ```
 "123456789" → "123" + "456" + "789"
@@ -197,8 +193,9 @@ QR 코드는 **4가지 에러 정정 레벨**을 제공합니다. 각 레벨은 
 "789" → 789 (10비트)
 ```
 
-**Alphanumeric 모드 (2자씩 묶음):**
+**Alphanumeric 모드 (2자씩 묶음):** [Alphanumeric 모드 인코딩](https://www.thonky.com/qr-code-tutorial/alphanumeric-mode-encoding)
 
+[Alphanumeric Table](https://www.thonky.com/qr-code-tutorial/alphanumeric-table)
 ```
 "HELLO WORLD" → "HE" + "LL" + "O " + "WO" + "RL" + "D"
     ↓
@@ -207,8 +204,7 @@ QR 코드는 **4가지 에러 정정 레벨**을 제공합니다. 각 레벨은 
 ...
 ```
 
-**Byte 모드 (1자씩):**
-
+**Byte 모드 (1자씩):** [Byte 모드 인코딩](https://www.thonky.com/qr-code-tutorial/byte-mode-encoding)
 ```
 "Hello" → "H" + "e" + "l" + "l" + "o"
     ↓
